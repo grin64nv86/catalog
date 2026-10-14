@@ -473,7 +473,137 @@
     "услуги водителя": { ru: "Услуги водителя", en: "Driver services", es: "Servicios de conductor" },
     "клиника по снятию болевого синдрома": { ru: "Клиника боли", en: "Pain clinic", es: "Clínica del dolor" },
     "медицинская клиника": { ru: "Медицинская клиника", en: "Medical clinic", es: "Clínica médica" },
+    "стоматолог": { ru: "Стоматолог", en: "Dentist", es: "Dentista" },
+    "сантехник": { ru: "Сантехник", en: "Plumber", es: "Fontanero" },
+    "ремонт кондиционеров": { ru: "Ремонт кондиционеров", en: "Air conditioning repair", es: "Reparación de aire acondicionado" },
+    "подрядчик по вентиляции, отоплению и кондиционированию": {
+      ru: "Отопление и вентиляция", en: "HVAC contractor", es: "Contratista de climatización" },
+    "подрядчик по бетонным работам": { ru: "Бетонные работы", en: "Concrete contractor", es: "Contratista de hormigón" },
+    "центр по уходу за лицом": { ru: "Уход за лицом", en: "Facial spa", es: "Centro facial" },
+    "отзывов нет": { ru: "Отзывов нет", en: "No reviews yet", es: "Sin reseñas" },
+    "ветеринар": { ru: "Ветеринар", en: "Veterinarian", es: "Veterinario" },
   };
+
+  /* Дни недели: принимаем и русские, и английские названия, отдаём на нужном языке */
+  const WEEKDAYS = {
+    "понедельник": { ru: "понедельник", en: "Monday", es: "lunes" },
+    "вторник": { ru: "вторник", en: "Tuesday", es: "martes" },
+    "среда": { ru: "среда", en: "Wednesday", es: "miércoles" },
+    "четверг": { ru: "четверг", en: "Thursday", es: "jueves" },
+    "пятница": { ru: "пятница", en: "Friday", es: "viernes" },
+    "суббота": { ru: "суббота", en: "Saturday", es: "sábado" },
+    "воскресенье": { ru: "воскресенье", en: "Sunday", es: "domingo" },
+    "monday": { ru: "понедельник", en: "Monday", es: "lunes" },
+    "tuesday": { ru: "вторник", en: "Tuesday", es: "martes" },
+    "wednesday": { ru: "среда", en: "Wednesday", es: "miércoles" },
+    "thursday": { ru: "четверг", en: "Thursday", es: "jueves" },
+    "friday": { ru: "пятница", en: "Friday", es: "viernes" },
+    "saturday": { ru: "суббота", en: "Saturday", es: "sábado" },
+    "sunday": { ru: "воскресенье", en: "Sunday", es: "domingo" },
+  };
+
+  const SHORT_DAYS = {
+    "пн": { ru: "пн", en: "Mon", es: "lun" }, "вт": { ru: "вт", en: "Tue", es: "mar" },
+    "ср": { ru: "ср", en: "Wed", es: "mié" }, "чт": { ru: "чт", en: "Thu", es: "jue" },
+    "пт": { ru: "пт", en: "Fri", es: "vie" }, "сб": { ru: "сб", en: "Sat", es: "sáb" },
+    "вс": { ru: "вс", en: "Sun", es: "dom" },
+  };
+
+  /* Фразы внутри расписания и статуса часов работы */
+  const HOURS_PHRASES = {
+    "24 часа в сутки": { ru: "24 часа в сутки", en: "Open 24 hours", es: "Abierto 24 horas" },
+    "круглосуточно": { ru: "Круглосуточно", en: "Open 24 hours", es: "Abierto 24 horas" },
+    "open 24 hours": { ru: "Круглосуточно", en: "Open 24 hours", es: "Abierto 24 horas" },
+    "закрыто": { ru: "Закрыто", en: "Closed", es: "Cerrado" },
+    "closed": { ru: "Закрыто", en: "Closed", es: "Cerrado" },
+    "открыто": { ru: "Открыто", en: "Open", es: "Abierto" },
+    "open": { ru: "Открыто", en: "Open", es: "Abierto" },
+    "скоро закроется": { ru: "Скоро закроется", en: "Closing soon", es: "Cierra pronto" },
+    "closing soon": { ru: "Скоро закроется", en: "Closing soon", es: "Cierra pronto" },
+  };
+
+  /* Страны, регионы и города, которые Google отдаёт по-русски */
+  const PLACES_I18N = {
+    "соединенные штаты": { ru: "Соединенные Штаты", en: "United States", es: "Estados Unidos" },
+    "соединённые штаты": { ru: "Соединенные Штаты", en: "United States", es: "Estados Unidos" },
+    "соединенные штаты америки": { ru: "Соединенные Штаты", en: "United States", es: "Estados Unidos" },
+    "united states": { ru: "Соединенные Штаты", en: "United States", es: "Estados Unidos" },
+    "респ. татарстан": { ru: "Респ. Татарстан", en: "Republic of Tatarstan", es: "República de Tartaristán" },
+    "республика татарстан": { ru: "Респ. Татарстан", en: "Republic of Tatarstan", es: "República de Tartaristán" },
+    "россия": { ru: "Россия", en: "Russia", es: "Rusia" },
+    "russia": { ru: "Россия", en: "Russia", es: "Rusia" },
+    "казань": { ru: "Казань", en: "Kazan", es: "Kazán" },
+    "kazan": { ru: "Казань", en: "Kazan", es: "Kazán" },
+    "москва": { ru: "Москва", en: "Moscow", es: "Moscú" },
+    "moscow": { ru: "Москва", en: "Moscow", es: "Moscú" },
+    "даллас": { ru: "Даллас", en: "Dallas", es: "Dallas" },
+    "dallas": { ru: "Даллас", en: "Dallas", es: "Dallas" },
+    "денвер": { ru: "Денвер", en: "Denver", es: "Denver" },
+    "denver": { ru: "Денвер", en: "Denver", es: "Denver" },
+  };
+
+  /* Фразы со временем: «Закроется в 18:00», «Откроется в 09:00», «Closes at 6 PM» */
+  const HOURS_PATTERNS = [
+    [/Закроется в\s*([\d:]+)/gi, "Закроется в $1", "Closes at $1", "Cierra a las $1"],
+    [/Откроется в\s*([\d:]+)/gi, "Откроется в $1", "Opens at $1", "Abre a las $1"],
+    [/Закрывается в\s*([\d:]+)/gi, "Закрывается в $1", "Closes at $1", "Cierra a las $1"],
+    [/Открывается в\s*([\d:]+)/gi, "Открывается в $1", "Opens at $1", "Abre a las $1"],
+    [/Closes at\s*([\d:]+|\d{1,2}\s*(?:am|pm))/gi, "Закроется в $1", "Closes at $1", "Cierra a las $1"],
+    [/Opens at\s*([\d:]+|\d{1,2}\s*(?:am|pm))/gi, "Откроется в $1", "Opens at $1", "Abre a las $1"],
+    [/Closes\s+(\d{1,2}\s*(?:am|pm))/gi, "Закроется в $1", "Closes at $1", "Cierra a las $1"],
+    [/Opens\s+(\d{1,2}\s*(?:am|pm))/gi, "Откроется в $1", "Opens at $1", "Abre a las $1"],
+  ];
+
+  /* Часы работы: «Открыто · Закроется в 18:00», «вторник: 09:00–20:00; …» */
+  function localizeHoursText(text) {
+    if (!text) return text;
+    let out = String(text);
+    // фразы со временем
+    for (const [pattern, ru, en, es] of HOURS_PATTERNS) {
+      out = out.replace(pattern, LANG === "ru" ? ru : (LANG === "es" ? es : en));
+    }
+    // дни недели
+    for (const [key, forms] of Object.entries(WEEKDAYS)) {
+      out = out.replace(new RegExp("(^|\\s|;)" + key + "(?=:|\\s)", "gi"),
+        (match, before) => before + (forms[LANG] || forms.en));
+    }
+    // короткие дни в скобках: «(ср)» → «(Wed)»
+    for (const [key, forms] of Object.entries(SHORT_DAYS)) {
+      out = out.replace(new RegExp("\\(" + key + "\\)", "gi"), "(" + (forms[LANG] || forms.en) + ")");
+    }
+    // фразы: «24 часа в сутки», «Закрыто», «Открыто»
+    for (const [key, forms] of Object.entries(HOURS_PHRASES)) {
+      out = out.replace(new RegExp(key, "gi"), forms[LANG] || forms.en);
+    }
+    return out;
+  }
+
+  function localizeSchedule(text) {
+    if (!text) return "";
+    return String(text).split(/;\s*/).map((slot) => {
+      const index = slot.indexOf(":");
+      if (index < 0) return localizeHoursText(slot.trim());
+      const day = slot.slice(0, index).trim();
+      const rest = slot.slice(index + 1).trim();
+      const forms = WEEKDAYS[day.toLowerCase()];
+      return (forms ? (forms[LANG] || forms.en) : day) + ": " + localizeHoursText(rest);
+    }).join("; ");
+  }
+
+  function localizeAddress(text) {
+    if (!text) return "";
+    return String(text).split(",").map((segment) => {
+      const trimmed = segment.trim();
+      const forms = PLACES_I18N[trimmed.toLowerCase()];
+      return forms ? (forms[LANG] || forms.en) : trimmed;
+    }).join(", ");
+  }
+
+  function localizeStatus(text) {
+    if (!text) return "";
+    return localizeHoursText(String(text));
+  }
+
 
   const SUPPORTED = ["ru", "en", "es"];
 
@@ -979,8 +1109,9 @@
       if (lang === "es-no" && row.spanish) return false;
       if (!needle) return true;
       // «query» в поиск не включаем: он одинаков у всех строк одного парсинга.
-      const haystack = [row.name, row.category, row.address, row.website, row.phone, row.city,
-                        row.hours, row.hoursStatus]
+      const haystack = [row.name, row.category, row.website, row.phone, row.city,
+                        localizeAddress(row.address), categoryLabel(row.category),
+                        row.hours, row.hoursStatus, localizeStatus(row.hoursStatus)]
         .filter(Boolean).join(" ").toLowerCase();
       return needle.split(/\s+/).every((token) => haystack.includes(token));
     });
@@ -1067,18 +1198,21 @@
     if (row.address) {
       const address = document.createElement("div");
       address.className = "addr";
-      address.textContent = "📍 " + row.address;
+      address.textContent = "📍 " + localizeAddress(row.address);
       article.append(address);
     }
 
     // Часы работы: состояние («Открыто · Закроется в 20:00») и расписание по дням.
-    if (row.hours_status || row.hours) {
+    if (row.hoursStatus || row.hours) {
       const hours = document.createElement("div");
       hours.className = "hours";
-      if (row.hours_status) {
+      if (row.hoursStatus) {
         const status = document.createElement("span");
-        status.className = "hours-status" + (/открыто|open\b/i.test(row.hours_status) ? " open" : "");
-        status.textContent = "🕒 " + row.hours_status;
+        const statusText = localizeStatus(row.hoursStatus);
+        // «открыто» на любом языке: ru Открыто/Abierto, en Open, es Abierto
+        status.className = "hours-status" +
+          (/открыто|abierto|open\b/i.test(statusText) ? " open" : "");
+        status.textContent = "🕒 " + statusText;
         hours.append(status);
       }
       if (row.hours) {
@@ -1093,8 +1227,9 @@
           const line = document.createElement("div");
           const [day, ...rest] = slot.split(":");
           const dayEl = document.createElement("b");
-          dayEl.textContent = day.trim() + ": ";
-          line.append(dayEl, document.createTextNode(rest.join(":").trim()));
+          const forms = WEEKDAYS[day.trim().toLowerCase()];
+          dayEl.textContent = (forms ? (forms[LANG] || forms.en) : day.trim()) + ": ";
+          line.append(dayEl, document.createTextNode(localizeHoursText(rest.join(":").trim())));
           schedule.append(line);
         }
         details.append(summary, schedule);
