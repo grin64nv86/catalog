@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Catálogo de negocios — Google Maps</title>
+  <link rel="icon" href="../icons/favicon.ico" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="../icons/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
+  <link rel="apple-touch-icon" href="../icons/favicon-apple-touch-icon.png">
+
+<style>
+  :root {
+    --bg: #0f1116;
+    --panel: #171a22;
+    --panel-2: #1e222c;
+    --line: #2a2f3b;
+    --text: #e8eaf0;
+    --muted: #9aa3b2;
+    --accent: #4f8cff;
+    --accent-2: #7cf3c0;
+    --good: #3fbf7f;
+    --warn: #e0a33a;
+    --bad: #8b93a3;
+    --radius: 12px;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: radial-gradient(1200px 600px at 15% -10%, #1b2130 0%, var(--bg) 55%);
+    color: var(--text);
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    min-height: 100vh;
+  }
+
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  header {
+    padding: 28px 24px 18px;
+    border-bottom: 1px solid var(--line);
+    background: rgba(15, 17, 22, .72);
+    backdrop-filter: blur(6px);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .wrap { max-width: 1280px; margin: 0 auto; }
+
+  h1 { margin: 0 0 4px; font-size: 22px; letter-spacing: .2px; }
+  .sub { color: var(--muted); font-size: 13px; }
+  .sub b { color: var(--text); font-weight: 600; }
+
+  .langs { display: inline-flex; gap: 4px; margin-left: 10px; vertical-align: middle; }
+  .langs button {
+    padding: 2px 7px; font-size: 11.5px; font-weight: 600; letter-spacing: .03em;
+    background: var(--panel-2); border: 1px solid var(--line); color: var(--muted);
+    border-radius: 6px; cursor: pointer;
+  }
+  .langs button:hover { color: var(--text); border-color: #3a4152; }
+  .langs button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  main { max-width: 1280px; margin: 0 auto; padding: 20px 24px 60px; }
+
+  /* --- Зона загрузки файла --- */
+  #dropzone {
+    border: 2px dashed var(--line);
+    border-radius: 16px;
+    padding: 44px 24px;
+    text-align: center;
+    background: var(--panel);
+    transition: border-color .15s, background .15s, transform .15s;
+    cursor: pointer;
+  }
+  #dropzone.drag { border-color: var(--accent); background: #1b2233; transform: scale(1.005); }
+  #dropzone .big { font-size: 17px; margin-bottom: 6px; }
+  #dropzone .hint { color: var(--muted); font-size: 13px; margin-top: 10px; }
+  #dropzone code {
+    background: var(--panel-2); border: 1px solid var(--line);
+    padding: 2px 6px; border-radius: 6px; font-size: 12.5px;
+  }
+
+  button, select, input[type="search"], input[type="text"] {
+    font: inherit;
+    color: var(--text);
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    padding: 8px 11px;
+    outline: none;
+  }
+  button { cursor: pointer; transition: border-color .15s, background .15s; }
+  button:hover { border-color: #3a4152; background: #232836; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  button.primary:hover { background: #3f7cf0; }
+  input[type="search"]:focus, input[type="text"]:focus, select:focus { border-color: var(--accent); }
+
+  .btnrow { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 16px; }
+
+  /* --- Панель управления --- */
+  #toolbar { display: none; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+  #toolbar.on { display: flex; }
+  #toolbar .grow { flex: 1 1 240px; min-width: 200px; }
+  #toolbar label { color: var(--muted); font-size: 12.5px; display: flex; align-items: center; gap: 6px; }
+  #filename { color: var(--muted); font-size: 12.5px; margin-left: auto; }
+
+  /* --- Сводка --- */
+  #stats { display: none; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 18px; }
+  #stats.on { display: grid; }
+  .stat { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; }
+  .stat .k { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+  .stat .v { font-size: 21px; font-weight: 700; margin-top: 3px; }
+
+  /* --- Каталог --- */
+  #grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 15px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    transition: border-color .15s, transform .15s;
+  }
+  .card:hover { border-color: #3a4152; transform: translateY(-1px); }
+  .card h2 { margin: 0; font-size: 16.5px; line-height: 1.3; }
+  .card .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+  .rating { display: inline-flex; align-items: center; gap: 5px; font-weight: 700; font-size: 14px; }
+  .rating .star { font-size: 13px; }
+  .rating.good { color: var(--good); }
+  .rating.mid { color: var(--warn); }
+  .rating.low { color: var(--bad); }
+  .reviews { color: var(--muted); font-size: 13px; }
+
+  .chip {
+    background: var(--panel-2); border: 1px solid var(--line);
+    color: var(--muted); font-size: 12px; padding: 2px 8px; border-radius: 999px;
+  }
+  .chip.es { color: #ffd9a0; border-color: #6a4a20; background: #2a2114; cursor: help; }
+
+  .addr { color: var(--muted); font-size: 13.5px; }
+
+  .hours { font-size: 13px; color: var(--muted); }
+  .hours-status { display: inline-block; }
+  .hours-status.open { color: var(--good); }
+  .hours details { margin-top: 4px; }
+  .hours summary { cursor: pointer; color: var(--accent); font-size: 12.5px; }
+  .hours .schedule { margin: 6px 0 0; padding-left: 2px; }
+  .hours .schedule div { padding: 1px 0; color: var(--muted); }
+  .hours .schedule b { color: var(--text); font-weight: 600; }
+  .links { display: flex; gap: 12px; flex-wrap: wrap; margin-top: auto; padding-top: 4px; font-size: 13.5px; }
+  .links a { white-space: nowrap; }
+
+  #empty { display: none; text-align: center; color: var(--muted); padding: 40px 0; }
+  #empty.on { display: block; }
+  #error { display: none; margin-top: 14px; padding: 12px 14px; border-radius: 10px;
+           background: #2a1b1b; border: 1px solid #5a2a2a; color: #ffb3b3; font-size: 13.5px; }
+  #error.on { display: block; }
+
+  #notice {
+    display: none; align-items: center; gap: 10px; flex-wrap: wrap;
+    margin-bottom: 14px; padding: 10px 14px; border-radius: 10px;
+    background: #16241f; border: 1px solid #23503f; color: #b9f0d5; font-size: 13.5px;
+  }
+  #notice.on { display: flex; }
+  #notice .spacer { flex: 1 1 auto; }
+  #notice button { background: #1b2c26; border-color: #2c5a48; color: #cdf5e4; padding: 6px 10px; }
+  #notice button:hover { background: #21382f; }
+  footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 0 24px 40px; }
+</style>
+  <meta name="description" content="Directorio de negocios con valoraciones, reseñas, direcciones, teléfonos y horarios.">
+  <link rel="alternate" hreflang="ru" href="../ru/">
+  <link rel="alternate" hreflang="en" href="../en/">
+  <link rel="alternate" hreflang="es" href="../es/">
+  <link rel="alternate" hreflang="x-default" href="../">
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <h1 data-i18n="title">Каталог организаций</h1>
+    <div class="sub" id="subtitle"><span data-i18n="subtitle">Данные из JSON-файла, полученного скриптом</span> <b>maps_scraper.py</b><span id="langs" class="langs" role="group" aria-label="Language"><button type="button" data-lang="ru">RU</button><button type="button" data-lang="en">EN</button><button type="button" data-lang="es">ES</button></span></div>
+  </div>
+</header>
+
+<main>
+  <!-- Шаг 1: загрузка JSON -->
+  <section id="dropzone" tabindex="0" role="button" aria-label="Загрузить JSON-файл">
+    <div class="big"><span data-i18n="dropBig">Перетащите сюда</span> <code>salons.json</code></div>
+    <div class="hint"><span data-i18n="dropHint">или нажмите, чтобы выбрать файл. Поддерживается массив объектов или объект с полем</span> <code>results</code>. <span data-i18n="dropHint2">Данные сохраняются в браузере, поэтому после обновления страницы каталог откроется сам.</span></div>
+    <div class="btnrow">
+      <button class="primary" id="pickBtn" type="button" data-i18n="pickFile">Выбрать файл</button>
+      <button id="demoBtn" type="button" data-i18n="loadServer">Загрузить salons.json с сервера</button>
+    </div>
+    <input type="file" id="fileInput" accept=".json,application/json" hidden>
+  </section>
+  <div id="error"></div>
+
+  <!-- Плашка о восстановленных данных -->
+  <div id="notice">
+    <span id="noticeText"></span>
+    <span class="spacer"></span>
+    <button id="noticePick" type="button" data-i18n="updateFile">Обновить файл</button>
+    <button id="noticeClear" type="button" data-i18n="clear">Очистить</button>
+  </div>
+
+  <!-- Панель управления -->
+  <div id="toolbar">
+    <input type="search" id="q" class="grow" placeholder="Поиск по названию, категории, адресу, сайту…" data-i18n-placeholder="searchPlaceholder" autocomplete="off">
+    <label><span data-i18n="filterCategory">Категория</span>
+      <select id="category"><option value="">все</option></select>
+    </label>
+    <label><span data-i18n="filterRating">Рейтинг от</span>
+      <select id="minRating">
+        <option value="0" data-i18n="any">любой</option>
+        <option value="3">3.0</option>
+        <option value="4">4.0</option>
+        <option value="4.5">4.5</option>
+        <option value="4.8">4.8</option>
+      </select>
+    </label>
+    <label><span data-i18n="filterSpanish">Испанский</span>
+      <select id="lang" title="Признаки испанского: атрибут заведения и отзывы на испанском — надёжные; испанская версия сайта — слабый">
+        <option value="" data-i18n="any">любой</option>
+        <option value="es" data-i18n="spanishAny">говорят по-испански (любой признак)</option>
+        <option value="es-strong" data-i18n="spanishStrong">подтверждено (атрибут или отзывы)</option>
+        <option value="es-no" data-i18n="spanishNo">без испанского</option>
+      </select>
+    </label>
+    <label><span data-i18n="filterSort">Сортировка</span>
+      <select id="sort">
+        <option value="rating" data-i18n="sortRating">рейтинг ↓</option>
+        <option value="reviews" data-i18n="sortReviews">отзывы ↓</option>
+        <option value="name" data-i18n="sortName">название A→Z</option>
+        <option value="address" data-i18n="sortAddress">адрес A→Z</option>
+      </select>
+    </label>
+    <button id="csvBtn" type="button" data-i18n="exportCsv">Экспорт CSV</button>
+    <button id="resetBtn" type="button" data-i18n="anotherFile">Другой файл</button>
+    <span id="filename"></span>
+  </div>
+
+  <!-- Сводка -->
+  <section id="stats">
+    <div class="stat"><div class="k" data-i18n="statFound">Найдено</div><div class="v" id="stTotal">0</div></div>
+    <div class="stat"><div class="k" data-i18n="statAvg">Средний рейтинг</div><div class="v" id="stAvg">—</div></div>
+    <div class="stat"><div class="k" data-i18n="statReviews">Отзывов всего</div><div class="v" id="stReviews">0</div></div>
+    <div class="stat"><div class="k" data-i18n="statPhone">С телефоном</div><div class="v" id="stPhone">0</div></div>
+    <div class="stat" title="Признаки: отзывы на испанском, атрибут Latino-owned, испанская версия сайта">
+      <div class="k" data-i18n="statSpanish">По-испански</div><div class="v" id="stSpanish">0</div></div>
+  </section>
+
+  <div id="grid"></div>
+  <div id="empty">
+    <div data-i18n="emptyText">Ничего не найдено — измените условия поиска или фильтры.</div>
+    <div class="btnrow"><button id="emptyReset" type="button" data-i18n="resetFilters">Сбросить фильтры</button></div>
+  </div>
+</main>
+
+<footer>
+  <span data-i18n="footer">Статическая страница, работает без интернета и без сервера: данные читаются прямо в браузере.</span>
+</footer>
+
+<!-- Данные, созданные export_json.py: локальный <script src> работает и по file://, в отличие от fetch -->
+<script src="../salons.data.js?v=2026-10-14T14:03:39+00:00" onerror="window.__CATALOG_DATA_MISSING__ = true"></script>
+<script>
+(() => {
+  "use strict";
+
+
+  /* ------------------------------------------------------------------ */
+  /* Языки интерфейса: ru / en / es                                      */
+  /* ------------------------------------------------------------------ */
+  const I18N = {
+    ru: {
+      docTitle: "Каталог организаций — Google Maps",
+      title: "Каталог организаций",
+      subtitle: "Данные из JSON-файла, полученного скриптом",
+      source: "Источник",
+      dropBig: "Перетащите сюда",
+      dropHint: "или нажмите, чтобы выбрать файл. Поддерживается массив объектов или объект с полем",
+      dropHint2: "Данные сохраняются в браузере, поэтому после обновления страницы каталог откроется сам.",
+      pickFile: "Выбрать файл",
+      loadServer: "Загрузить salons.json с сервера",
+      updateFile: "Обновить файл",
+      clear: "Очистить",
+      searchPlaceholder: "Поиск по названию, категории, адресу, сайту…",
+      filterCategory: "Категория",
+      filterRating: "Рейтинг от",
+      filterSpanish: "Испанский",
+      filterSort: "Сортировка",
+      all: "все",
+      any: "любой",
+      spanishAny: "говорят по-испански (любой признак)",
+      spanishStrong: "подтверждено (атрибут или отзывы)",
+      spanishNo: "без испанского",
+      sortRating: "рейтинг ↓", sortReviews: "отзывы ↓",
+      sortName: "название A→Z", sortAddress: "адрес A→Z",
+      exportCsv: "Экспорт CSV",
+      anotherFile: "Другой файл",
+      statFound: "Найдено", statAvg: "Средний рейтинг", statReviews: "Отзывов всего",
+      statPhone: "С телефоном", statSpanish: "По-испански",
+      emptyText: "Ничего не найдено — измените условия поиска или фильтры.",
+      resetFilters: "Сбросить фильтры",
+      footer: "Статическая страница, работает без интернета и без сервера: данные читаются прямо в браузере.",
+      schedule: "Расписание",
+      spanishYes: "🇪🇸 говорят по-испански",
+      spanishMaybe: "🇪🇸 возможно, по-испански",
+      noName: "(без названия)",
+      restored: "Каталог восстановлен", loadedAuto: "Каталог загружен автоматически",
+      savedAgo: "сохранено", exportedAgo: "выгружено", inLocalStorage: "в localStorage",
+      justNow: "только что", minAgo: "мин назад", hourAgo: "ч назад",
+      records: ["запись", "записи", "записей"],
+      reviewsWord: ["отзыв", "отзыва", "отзывов"],
+      errJson: "Не удалось прочитать JSON", errNoArray: "В файле нет массива с организациями.",
+      errNoRows: "Файл прочитан, но подходящих записей не найдено.",
+      errFetch: "Не удалось загрузить salons.json автоматически",
+      errFetchHint: "Откройте страницу через локальный сервер (python -m http.server) или выберите файл вручную.",
+      errSave: "Браузер не смог сохранить данные",
+      errSaveHint: "после обновления страницы файл придётся загрузить заново.",
+      csvHead: ["Название", "Рейтинг", "Отзывов", "Категория", "Адрес", "Телефон", "Сайт",
+                "Часы работы", "Сейчас", "По-испански", "Признак языка", "Google Maps", "Город", "Запрос"],
+      langName: "Русский",
+    },
+    en: {
+      docTitle: "Business catalog — Google Maps",
+      title: "Business catalog",
+      subtitle: "Data from a JSON file produced by",
+      source: "Source",
+      dropBig: "Drop",
+      dropHint: "here or click to choose a file. An array of objects or an object with a",
+      dropHint2: "The data is kept in your browser, so the catalog opens by itself after a reload.",
+      pickFile: "Choose file",
+      loadServer: "Load salons.json from server",
+      updateFile: "Reload file",
+      clear: "Clear",
+      searchPlaceholder: "Search by name, category, address, website…",
+      filterCategory: "Category",
+      filterRating: "Rating from",
+      filterSpanish: "Spanish",
+      filterSort: "Sort",
+      all: "all",
+      any: "any",
+      spanishAny: "speaks Spanish (any signal)",
+      spanishStrong: "confirmed (attribute or reviews)",
+      spanishNo: "no Spanish",
+      sortRating: "rating ↓", sortReviews: "reviews ↓",
+      sortName: "name A→Z", sortAddress: "address A→Z",
+      exportCsv: "Export CSV",
+      anotherFile: "Another file",
+      statFound: "Found", statAvg: "Average rating", statReviews: "Reviews total",
+      statPhone: "With phone", statSpanish: "Spanish",
+      emptyText: "Nothing found — adjust the search or filters.",
+      resetFilters: "Reset filters",
+      footer: "A static page: it works without internet or a server, reading the data in your browser.",
+      schedule: "Opening hours",
+      spanishYes: "🇪🇸 speaks Spanish",
+      spanishMaybe: "🇪🇸 possibly Spanish",
+      noName: "(no name)",
+      restored: "Catalog restored", loadedAuto: "Catalog loaded automatically",
+      savedAgo: "saved", exportedAgo: "exported", inLocalStorage: "in localStorage",
+      justNow: "just now", minAgo: "min ago", hourAgo: "h ago",
+      records: ["record", "records"],
+      reviewsWord: ["review", "reviews"],
+      errJson: "Could not read the JSON", errNoArray: "The file has no array of organizations.",
+      errNoRows: "The file was read, but no matching records were found.",
+      errFetch: "Could not load salons.json automatically",
+      errFetchHint: "Serve the page over a local server (python -m http.server) or pick the file manually.",
+      errSave: "The browser could not save the data",
+      errSaveHint: "the file will have to be chosen again after a reload.",
+      csvHead: ["Name", "Rating", "Reviews", "Category", "Address", "Phone", "Website",
+                "Opening hours", "Now", "Spanish", "Language signal", "Google Maps", "City", "Query"],
+      langName: "English",
+    },
+    es: {
+      docTitle: "Catálogo de negocios — Google Maps",
+      title: "Catálogo de negocios",
+      subtitle: "Datos de un archivo JSON generado por",
+      source: "Fuente",
+      dropBig: "Arrastra aquí",
+      dropHint: "o haz clic para elegir un archivo. Se admite un array de objetos o un objeto con",
+      dropHint2: "Los datos se guardan en el navegador, así que el catálogo se abre solo al recargar.",
+      pickFile: "Elegir archivo",
+      loadServer: "Cargar salons.json del servidor",
+      updateFile: "Actualizar archivo",
+      clear: "Borrar",
+      searchPlaceholder: "Buscar por nombre, categoría, dirección, web…",
+      filterCategory: "Categoría",
+      filterRating: "Valoración desde",
+      filterSpanish: "Español",
+      filterSort: "Orden",
+      all: "todas",
+      any: "cualquiera",
+      spanishAny: "hablan español (cualquier señal)",
+      spanishStrong: "confirmado (atributo o reseñas)",
+      spanishNo: "sin español",
+      sortRating: "valoración ↓", sortReviews: "reseñas ↓",
+      sortName: "nombre A→Z", sortAddress: "dirección A→Z",
+      exportCsv: "Exportar CSV",
+      anotherFile: "Otro archivo",
+      statFound: "Encontrados", statAvg: "Valoración media", statReviews: "Reseñas en total",
+      statPhone: "Con teléfono", statSpanish: "En español",
+      emptyText: "No se encontró nada: cambia la búsqueda o los filtros.",
+      resetFilters: "Restablecer filtros",
+      footer: "Página estática: funciona sin internet ni servidor, los datos se leen en el navegador.",
+      schedule: "Horario",
+      spanishYes: "🇪🇸 hablan español",
+      spanishMaybe: "🇪🇸 posiblemente español",
+      noName: "(sin nombre)",
+      restored: "Catálogo restaurado", loadedAuto: "Catálogo cargado automáticamente",
+      savedAgo: "guardado", exportedAgo: "exportado", inLocalStorage: "en localStorage",
+      justNow: "ahora mismo", minAgo: "min atrás", hourAgo: "h atrás",
+      records: ["registro", "registros"],
+      reviewsWord: ["reseña", "reseñas"],
+      errJson: "No se pudo leer el JSON", errNoArray: "El archivo no contiene un array de organizaciones.",
+      errNoRows: "El archivo se leyó, pero no se encontraron registros adecuados.",
+      errFetch: "No se pudo cargar salons.json automáticamente",
+      errFetchHint: "Abre la página con un servidor local (python -m http.server) o elige el archivo a mano.",
+      errSave: "El navegador no pudo guardar los datos",
+      errSaveHint: "tras recargar habrá que elegir el archivo de nuevo.",
+      csvHead: ["Nombre", "Valoración", "Reseñas", "Categoría", "Dirección", "Teléfono", "Web",
+                "Horario", "Ahora", "Español", "Señal de idioma", "Google Maps", "Ciudad", "Consulta"],
+      langName: "Español",
+    },
+  };
+
+  // Перевод категорий: ключи — как их отдают источники (Google по-русски,
+  // Overture по-английски), значения — подписи для трёх языков.
+  const CATEGORY_I18N = {
+    "парикмахерская": { ru: "Парикмахерская", en: "Hair salon", es: "Peluquería" },
+    "мужская парикмахерская": { ru: "Мужская парикмахерская", en: "Barbershop", es: "Barbería" },
+    "салон красоты": { ru: "Салон красоты", en: "Beauty salon", es: "Salón de belleza" },
+    "hair salon": { ru: "Парикмахерская", en: "Hair salon", es: "Peluquería" },
+    "barber": { ru: "Барбершоп", en: "Barbershop", es: "Barbería" },
+    "hair stylist": { ru: "Парикмахер", en: "Hair stylist", es: "Peluquero" },
+    "hair extensions": { ru: "Наращивание волос", en: "Hair extensions", es: "Extensiones de cabello" },
+    "beauty salon": { ru: "Салон красоты", en: "Beauty salon", es: "Salón de belleza" },
+    "nail salon": { ru: "Маникюрный салон", en: "Nail salon", es: "Salón de uñas" },
+    "spa": { ru: "Спа", en: "Spa", es: "Spa" },
+    "day spa": { ru: "Дневной спа", en: "Day spa", es: "Spa de día" },
+    "tanning salon": { ru: "Солярий", en: "Tanning salon", es: "Solárium" },
+    "стоматология": { ru: "Стоматология", en: "Dentist", es: "Dentista" },
+    "стоматологическая клиника": { ru: "Стоматология", en: "Dental clinic", es: "Clínica dental" },
+    "dental clinic": { ru: "Стоматология", en: "Dental clinic", es: "Clínica dental" },
+    "general dentistry": { ru: "Стоматология", en: "General dentistry", es: "Odontología general" },
+    "pediatric dentistry": { ru: "Детская стоматология", en: "Pediatric dentistry", es: "Odontología infantil" },
+    "cosmetic dentistry": { ru: "Эстетическая стоматология", en: "Cosmetic dentistry", es: "Odontología estética" },
+    "кофейня": { ru: "Кофейня", en: "Coffee shop", es: "Cafetería" },
+    "coffee shop": { ru: "Кофейня", en: "Coffee shop", es: "Cafetería" },
+    "cafe": { ru: "Кафе", en: "Cafe", es: "Café" },
+    "кофейня-кондитерская": { ru: "Кофейня-кондитерская", en: "Coffee & pastry shop", es: "Cafetería y pastelería" },
+    "ветеринарная клиника": { ru: "Ветеринарная клиника", en: "Veterinary clinic", es: "Clínica veterinaria" },
+    "ветеринар": { ru: "Ветеринар", en: "Veterinarian", es: "Veterinario" },
+    "veterinarian": { ru: "Ветеринарная клиника", en: "Veterinarian", es: "Veterinario" },
+    "animal or pet service": { ru: "Услуги для животных", en: "Pet services", es: "Servicios para mascotas" },
+    "ремонт и обслуживание автомобилей": { ru: "Ремонт и обслуживание автомобилей", en: "Auto repair", es: "Taller mecánico" },
+    "automotive repair": { ru: "Автосервис", en: "Auto repair", es: "Taller mecánico" },
+    "automotive service": { ru: "Автосервис", en: "Automotive service", es: "Servicio automotriz" },
+    "auto body shop": { ru: "Кузовной ремонт", en: "Auto body shop", es: "Taller de chapa y pintura" },
+    "auto detailing": { ru: "Детейлинг", en: "Auto detailing", es: "Detallado de autos" },
+    "auto glass service": { ru: "Автостёкла", en: "Auto glass service", es: "Cristales de autos" },
+    "gym": { ru: "Фитнес-клуб", en: "Gym", es: "Gimnasio" },
+    "фитнес-клуб": { ru: "Фитнес-клуб", en: "Gym", es: "Gimnasio" },
+    "fitness trainer": { ru: "Тренер", en: "Fitness trainer", es: "Entrenador personal" },
+    "sport or fitness facility": { ru: "Спортивный объект", en: "Sports facility", es: "Instalación deportiva" },
+    "coworking space": { ru: "Коворкинг", en: "Coworking space", es: "Espacio de coworking" },
+    "услуги водителя": { ru: "Услуги водителя", en: "Driver services", es: "Servicios de conductor" },
+    "клиника по снятию болевого синдрома": { ru: "Клиника боли", en: "Pain clinic", es: "Clínica del dolor" },
+    "медицинская клиника": { ru: "Медицинская клиника", en: "Medical clinic", es: "Clínica médica" },
+  };
+
+  const SUPPORTED = ["ru", "en", "es"];
+
+  function detectLanguage() {
+    // 1) язык, проставленный при публикации (/ru/, /en/, /es/)
+    const fromHtml = (document.documentElement.lang || "").toLowerCase().slice(0, 2);
+    if (SUPPORTED.includes(fromHtml)) return fromHtml;
+    // 2) язык из адреса
+    const fromPath = (location.pathname.match(/\/(ru|en|es)(\/|$)/) || [])[1];
+    if (fromPath) return fromPath;
+    // 3) выбор пользователя, 4) язык браузера
+    try {
+      const saved = localStorage.getItem("catalog-lang");
+      if (SUPPORTED.includes(saved)) return saved;
+    } catch (err) { /* приватный режим */ }
+    const fromBrowser = (navigator.language || "en").toLowerCase().slice(0, 2);
+    return SUPPORTED.includes(fromBrowser) ? fromBrowser : "en";
+  }
+
+  let LANG = detectLanguage();
+
+  function t(key) {
+    const dict = I18N[LANG] || I18N.en;
+    return dict[key] !== undefined ? dict[key] : (I18N.en[key] !== undefined ? I18N.en[key] : key);
+  }
+
+  // Склонение по правилам языка: ru — три формы, en/es — две
+  function pluralBy(count, forms) {
+    const n = Math.abs(count);
+    if (forms.length === 2) return n === 1 ? forms[0] : forms[1];
+    const tail100 = n % 100, tail10 = n % 10;
+    if (tail100 >= 11 && tail100 <= 14) return forms[2];
+    if (tail10 === 1) return forms[0];
+    if (tail10 >= 2 && tail10 <= 4) return forms[1];
+    return forms[2];
+  }
+
+  const recordsWord = (count) => pluralBy(count, t("records"));
+  const reviewsWord = (count) => pluralBy(count, t("reviewsWord"));
+
+  function categoryLabel(value) {
+    if (!value) return "";
+    const key = String(value).trim().toLowerCase();
+    const found = CATEGORY_I18N[key];
+    return found ? (found[LANG] || found.en || value) : value;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Состояние                                                           */
+  /* ------------------------------------------------------------------ */
+  const state = { rows: [], filtered: [], fileName: "" };
+
+  const $ = (id) => document.getElementById(id);
+  const el = {
+    dropzone: $("dropzone"), pickBtn: $("pickBtn"), demoBtn: $("demoBtn"), fileInput: $("fileInput"),
+    toolbar: $("toolbar"), stats: $("stats"), grid: $("grid"), empty: $("empty"), error: $("error"),
+    q: $("q"), category: $("category"), minRating: $("minRating"), sort: $("sort"), lang: $("lang"),
+    langs: $("langs"),
+    csvBtn: $("csvBtn"), resetBtn: $("resetBtn"), filename: $("filename"),
+    subtitle: $("subtitle"), stTotal: $("stTotal"), stAvg: $("stAvg"),
+    stReviews: $("stReviews"), stPhone: $("stPhone"), stSpanish: $("stSpanish"),
+    notice: $("notice"), noticeText: $("noticeText"), noticePick: $("noticePick"), noticeClear: $("noticeClear"),
+    emptyReset: $("emptyReset"),
+  };
+
+  /* ------------------------------------------------------------------ */
+  /* Хранилище: данные переживают перезагрузку страницы                  */
+  /* ------------------------------------------------------------------ */
+  const DB_NAME = "maps-catalog";
+  const DB_STORE = "state";
+  const DB_RECORD = "last";
+  const LS_ROWS = "maps-catalog/rows";     // запасной вариант, если IndexedDB недоступен
+  const LS_FILTERS = "maps-catalog/filters"; // мелкие настройки вида — отдельно
+
+  function idbRequest(request) {
+    return new Promise((resolve, reject) => {
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error || new Error("IndexedDB request failed"));
+    });
+  }
+
+  function idbOpen() {
+    return new Promise((resolve, reject) => {
+      if (!("indexedDB" in window)) { reject(new Error("IndexedDB недоступен")); return; }
+      const request = indexedDB.open(DB_NAME, 1);
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains(DB_STORE)) db.createObjectStore(DB_STORE, { keyPath: "id" });
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error || new Error("IndexedDB не открылся"));
+      request.onblocked = () => reject(new Error("IndexedDB заблокирован"));
+    });
+  }
+
+  const store = {
+    mode: "",           // "idb" | "localStorage" | "off"
+    warning: "",
+
+    async saveRows(payload) {
+      try {
+        const db = await idbOpen();
+        try {
+          const tx = db.transaction(DB_STORE, "readwrite");
+          tx.objectStore(DB_STORE).put({ id: DB_RECORD, ...payload });
+          await new Promise((resolve, reject) => {
+            tx.oncomplete = resolve;
+            tx.onerror = () => reject(tx.error);
+            tx.onabort = () => reject(tx.error);
+          });
+        } finally { db.close(); }
+        this.mode = "idb";
+        this.warning = "";
+        return true;
+      } catch (idbError) {
+        try {
+          localStorage.setItem(LS_ROWS, JSON.stringify(payload));
+          this.mode = "localStorage";
+          this.warning = "";
+          return true;
+        } catch (lsError) {
+          this.mode = "off";
+          this.warning = t("errSave") + " (" + (lsError.name || lsError.message) + ") — " +
+            t("errSaveHint");
+          return false;
+        }
+      }
+    },
+
+    async loadRows() {
+      try {
+        const db = await idbOpen();
+        try {
+          const record = await idbRequest(db.transaction(DB_STORE, "readonly").objectStore(DB_STORE).get(DB_RECORD));
+          if (record && Array.isArray(record.rows) && record.rows.length) { this.mode = "idb"; return record; }
+        } finally { db.close(); }
+      } catch (err) { /* переходим к localStorage */ }
+
+      try {
+        const raw = localStorage.getItem(LS_ROWS);
+        if (raw) {
+          const record = JSON.parse(raw);
+          if (record && Array.isArray(record.rows) && record.rows.length) { this.mode = "localStorage"; return record; }
+        }
+      } catch (err) { /* нет сохранённых данных */ }
+      return null;
+    },
+
+    async clear() {
+      try {
+        const db = await idbOpen();
+        try {
+          const tx = db.transaction(DB_STORE, "readwrite");
+          tx.objectStore(DB_STORE).delete(DB_RECORD);
+          await new Promise((resolve, reject) => {
+            tx.oncomplete = resolve;
+            tx.onerror = () => reject(tx.error);
+          });
+        } finally { db.close(); }
+      } catch (err) { /* нечего чистить */ }
+      try { localStorage.removeItem(LS_ROWS); } catch (err) { /* ignore */ }
+    },
+
+    saveFilters(filters) {
+      try { localStorage.setItem(LS_FILTERS, JSON.stringify(filters)); } catch (err) { /* ignore */ }
+    },
+
+    loadFilters() {
+      try {
+        const raw = localStorage.getItem(LS_FILTERS);
+        return raw ? JSON.parse(raw) : null;
+      } catch (err) { return null; }
+    },
+  };
+
+  function currentFilters() {
+    return { q: el.q.value, category: el.category.value, minRating: el.minRating.value,
+             sort: el.sort.value, lang: el.lang.value };
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Нормализация записей из JSON                                        */
+  /* ------------------------------------------------------------------ */
+  const NA = new Set(["", "н/д", "n/a", "na", "none", "null", "undefined", "-"]);
+
+  function pick(obj, keys) {
+    for (const key of keys) {
+      if (obj[key] !== undefined && obj[key] !== null) {
+        const value = String(obj[key]).trim();
+        if (value && !NA.has(value.toLowerCase())) return value;
+      }
+    }
+    return "";
+  }
+
+  function num(value) {
+    if (value === undefined || value === null) return null;
+    const n = parseFloat(String(value).replace(",", ".").replace(/\s/g, ""));
+    return Number.isFinite(n) ? n : null;
+  }
+
+  function normalize(raw) {
+    if (!raw || typeof raw !== "object") return null;
+    const name = pick(raw, ["name", "title", "Название", "название"]);
+    const address = pick(raw, ["address", "addr", "Адрес", "адрес"]);
+    const category = pick(raw, ["category", "type", "Категория", "категория"]);
+    const website = pick(raw, ["website", "site", "url_site", "Сайт", "сайт"]);
+    const mapsUrl = pick(raw, ["url", "maps_url", "link", "Ссылка", "ссылка"]);
+    const info = pick(raw, ["info", "raw"]);
+    const hours = pick(raw, ["hours", "opening_hours", "schedule", "Часы работы", "часы работы"]);
+    const hoursStatus = pick(raw, ["hours_status", "hours_now", "open_now", "Статус часов"]);
+    const spanishRaw = raw.lang_es ?? raw.spanish ?? raw.испанский ?? 0;
+    const spanish = spanishRaw === true || spanishRaw === 1 || String(spanishRaw).toLowerCase() === "да";
+    const spanishEvidence = pick(raw, ["lang_es_evidence", "spanish_evidence", "Обоснование языка"]);
+    const spanishSources = pick(raw, ["lang_es_sources", "spanish_sources"]);
+    let reviews = num(pick(raw, ["reviews", "review_count", "reviews_count", "Отзывы", "отзывы"]));
+    let rating = num(pick(raw, ["rating", "stars", "Рейтинг", "рейтинг"]));
+
+    // Если rating/reviews не разобрались, пробуем вытащить их из строки info.
+    if ((rating === null || reviews === null) && info) {
+      if (rating === null) {
+        const m = info.match(/(\d[.,]\d)/);
+        if (m) rating = num(m[1]);
+      }
+      if (reviews === null) {
+        const m = info.match(/\(([\d\s\u00a0.,]+)\)/) || info.match(/([\d\s\u00a0.,]{1,12})\s*(?:reviews?|отзыв)/i);
+        if (m) reviews = num(m[1].replace(/[^\d]/g, ""));
+      }
+    }
+
+    if (!name && !address && !mapsUrl) return null;
+
+    return {
+      name: name || "(no name)",
+      rating,
+      reviews,
+      category,
+      address: address || (info && /[a-zA-Zа-яА-Я]/.test(info) ? info : ""),
+      phone: pick(raw, ["phone", "tel", "Телефон", "телефон"]),
+      website,
+      hours,
+      hoursStatus,
+      spanish,
+      spanishEvidence,
+      spanishSources,
+      // Сильный признак: атрибут заведения или отзывы на испанском.
+      spanishStrong: /attr|reviews/.test(spanishSources),
+      url: mapsUrl,
+      city: pick(raw, ["city", "Город", "город"]),
+      query: pick(raw, ["query", "Запрос", "запрос"]),
+    };
+  }
+
+  function extractRows(parsed) {
+    let list = parsed;
+    if (!Array.isArray(list)) {
+      for (const key of ["results", "data", "items", "places", "rows"]) {
+        if (Array.isArray(parsed && parsed[key])) { list = parsed[key]; break; }
+      }
+    }
+    if (!Array.isArray(list)) throw new Error(t("errNoArray"));
+    return list.map(normalize).filter(Boolean);
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Загрузка                                                            */
+  /* ------------------------------------------------------------------ */
+  function showError(message) {
+    el.error.textContent = message;
+    el.error.classList.add("on");
+  }
+  function clearError() { el.error.classList.remove("on"); el.error.textContent = ""; }
+
+  /* Русские склонения: 1 запись, 2 записи, 11 записей. */
+  function plural(count, forms) {
+    const n = Math.abs(Math.trunc(count));
+    const tail100 = n % 100;
+    const tail10 = n % 10;
+    if (tail100 >= 11 && tail100 <= 14) return forms[2];
+    if (tail10 === 1) return forms[0];
+    if (tail10 >= 2 && tail10 <= 4) return forms[1];
+    return forms[2];
+  }
+
+  function relativeTime(timestamp) {
+    const seconds = Math.max(0, Math.round((Date.now() - timestamp) / 1000));
+    if (seconds < 60) return t("justNow");
+    const minutes = Math.round(seconds / 60);
+    if (minutes < 60) return minutes + " " + t("minAgo");
+    const hours = Math.round(minutes / 60);
+    if (hours < 24) return hours + " " + t("hourAgo");
+    return new Date(timestamp).toLocaleString(LANG === "ru" ? "ru-RU" : LANG);
+  }
+
+  /* Применяет выбранный язык ко всему интерфейсу и перерисовывает каталог */
+  function applyLanguage() {
+    document.documentElement.lang = LANG;
+    document.title = t("docTitle");
+    document.querySelectorAll("[data-i18n]").forEach((node) => {
+      node.textContent = t(node.dataset.i18n);
+    });
+    document.querySelectorAll("[data-i18n-placeholder]").forEach((node) => {
+      node.placeholder = t(node.dataset.i18nPlaceholder);
+    });
+    document.querySelectorAll("#langs button").forEach((button) => {
+      button.classList.toggle("active", button.dataset.lang === LANG);
+      button.title = (I18N[button.dataset.lang] || {}).langName || button.dataset.lang;
+    });
+    document.querySelectorAll("[data-i18n-title]").forEach((node) => {
+      node.title = t(node.dataset.i18nTitle);
+    });
+    buildCategoryOptions();
+    applyFilters();
+  }
+
+  /* Переключение языка: на опубликованном сайте — переход на адрес языка,
+     локально (один файл) — мгновенная смена без перезагрузки */
+  function switchLanguage(next) {
+    if (!SUPPORTED.includes(next) || next === LANG) return;
+    LANG = next;
+    try { localStorage.setItem("catalog-lang", next); } catch (err) { /* приватный режим */ }
+    const match = location.pathname.match(/\/(ru|en|es)(\/|$)/);
+    if (match) {
+      location.href = location.pathname.replace(/\/(ru|en|es)(\/|$)/, "/" + next + "$2")
+        + location.search + location.hash;
+      return;
+    }
+    applyLanguage();
+  }
+
+  const langButtons = document.querySelectorAll("#langs button");
+  langButtons.forEach((button) => {
+    button.addEventListener("click", () => switchLanguage(button.dataset.lang));
+  });
+
+  function showNotice(message) {
+    el.noticeText.textContent = message;
+    el.notice.classList.toggle("on", Boolean(message));
+  }
+
+  /* Отрисовка уже готового набора записей (после загрузки файла или восстановления). */
+  function applyData(rows, fileName) {
+    state.rows = rows;
+    state.fileName = fileName || "данные";
+    el.filename.textContent = state.fileName;
+    el.dropzone.style.display = "none";
+    el.toolbar.classList.add("on");
+    el.stats.classList.add("on");
+    buildCategoryOptions();
+
+    const sources = new Set(rows.map((r) => [r.query, r.city].filter(Boolean).join(" · ")).filter(Boolean));
+    el.subtitle.textContent = "";
+    el.subtitle.append(document.createTextNode(t("source") + ": "));
+    const b = document.createElement("b");
+    b.textContent = state.fileName;
+    el.subtitle.append(b,
+      document.createTextNode(sources.size ? " · " + [...sources].join("; ") : ""), el.langs);
+  }
+
+  function loadText(text, fileName) {
+    let parsed;
+    try {
+      parsed = JSON.parse(text);
+    } catch (err) {
+      showError(t("errJson") + ": " + err.message);
+      return;
+    }
+    let rows;
+    try {
+      rows = extractRows(parsed);
+    } catch (err) {
+      showError(err.message);
+      return;
+    }
+    if (!rows.length) { showError(t("errNoRows")); return; }
+
+    clearError();
+    showNotice("");
+    applyData(rows, fileName);
+
+    // Сбрасываем фильтры прошлого файла и сохраняем новый набор в браузере.
+    el.q.value = ""; el.minRating.value = "0"; el.sort.value = "rating";
+    el.category.value = ""; el.lang.value = "";
+    store.saveFilters(currentFilters());
+    applyFilters();
+    persistRows();
+
+    // Данные слишком большие для хранилища — предупреждаем честно.
+    if (store.warning) showNotice(store.warning);
+  }
+
+  async function persistRows() {
+    if (!state.rows.length) return false;
+    return store.saveRows({ fileName: state.fileName, savedAt: Date.now(), rows: state.rows });
+  }
+
+  function loadFile(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => loadText(String(reader.result), file.name);
+    reader.onerror = () => showError("Не удалось прочитать файл " + file.name);
+    reader.readAsText(file, "utf-8");
+  }
+
+  el.pickBtn.addEventListener("click", (e) => { e.stopPropagation(); el.fileInput.click(); });
+  el.dropzone.addEventListener("click", () => el.fileInput.click());
+  el.dropzone.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); el.fileInput.click(); }
+  });
+  el.fileInput.addEventListener("change", () => loadFile(el.fileInput.files[0]));
+
+  ["dragenter", "dragover"].forEach((evt) =>
+    el.dropzone.addEventListener(evt, (e) => { e.preventDefault(); el.dropzone.classList.add("drag"); }));
+  ["dragleave", "drop"].forEach((evt) =>
+    el.dropzone.addEventListener(evt, (e) => { e.preventDefault(); el.dropzone.classList.remove("drag"); }));
+  el.dropzone.addEventListener("drop", (e) => {
+    const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (file) loadFile(file);
+  });
+  // Файл, брошенный в любое место страницы, тоже принимаем.
+  // Если бросили прямо в зону загрузки — её собственный обработчик уже сработал.
+  document.addEventListener("dragover", (e) => e.preventDefault());
+  document.addEventListener("drop", (e) => {
+    e.preventDefault();
+    if (el.dropzone.contains(e.target)) return;
+    const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (file) loadFile(file);
+  });
+
+  el.demoBtn.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    try {
+      const res = await fetch("../salons.json", { cache: "no-store" });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      loadText(await res.text(), "salons.json");
+    } catch (err) {
+      showError(t("errFetch") + " (" + err.message + "). " + t("errFetchHint"));
+    }
+  });
+
+  el.resetBtn.addEventListener("click", async () => {
+    await store.clear();
+    state.rows = []; state.filtered = []; state.fileName = "";
+    el.grid.textContent = ""; el.fileInput.value = "";
+    el.toolbar.classList.remove("on"); el.stats.classList.remove("on");
+    el.dropzone.style.display = "";
+    el.filename.textContent = "";
+    el.q.value = ""; el.category.value = ""; el.minRating.value = "0"; el.sort.value = "rating";
+    el.lang.value = "";
+    el.subtitle.textContent = "";
+    el.subtitle.append(document.createTextNode(t("subtitle") + " "));
+    const scriptName = document.createElement("b");
+    scriptName.textContent = "maps_scraper.py";
+    el.subtitle.append(scriptName, el.langs);
+    showNotice("");
+    clearError();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  el.noticeClear.addEventListener("click", () => el.resetBtn.click());
+  el.noticePick.addEventListener("click", () => el.fileInput.click());
+
+  // Если фильтры скрыли все записи, даём выход одним нажатием.
+  el.emptyReset.addEventListener("click", () => {
+    el.q.value = ""; el.category.value = ""; el.minRating.value = "0"; el.sort.value = "rating";
+    el.lang.value = "";
+    store.saveFilters(currentFilters());
+    applyFilters();
+  });
+
+  /* ------------------------------------------------------------------ */
+  /* Фильтры, сортировка, отрисовка                                      */
+  /* ------------------------------------------------------------------ */
+  function buildCategoryOptions() {
+    const categories = [...new Set(state.rows.map((r) => r.category).filter(Boolean))]
+      .sort((a, b) => categoryLabel(a).localeCompare(categoryLabel(b), LANG));
+    const previous = el.category.value;
+    el.category.textContent = "";
+    const all = document.createElement("option");
+    all.value = ""; all.textContent = t("all") + " (" + state.rows.length + ")";
+    el.category.append(all);
+    for (const c of categories) {
+      const option = document.createElement("option");
+      option.value = c; option.textContent = categoryLabel(c);
+      el.category.append(option);
+    }
+    if ([...el.category.options].some((option) => option.value === previous)) {
+      el.category.value = previous;
+    }
+  }
+
+  function applyFilters() {
+    const needle = el.q.value.trim().toLowerCase();
+    const category = el.category.value;
+    const minRating = parseFloat(el.minRating.value) || 0;
+    const lang = el.lang.value;
+
+    state.filtered = state.rows.filter((row) => {
+      if (category && row.category !== category) return false;
+      if (minRating && (row.rating === null || row.rating < minRating)) return false;
+      if (lang === "es" && !row.spanish) return false;
+      if (lang === "es-strong" && !row.spanishStrong) return false;
+      if (lang === "es-no" && row.spanish) return false;
+      if (!needle) return true;
+      // «query» в поиск не включаем: он одинаков у всех строк одного парсинга.
+      const haystack = [row.name, row.category, row.address, row.website, row.phone, row.city,
+                        row.hours, row.hoursStatus]
+        .filter(Boolean).join(" ").toLowerCase();
+      return needle.split(/\s+/).every((token) => haystack.includes(token));
+    });
+
+    const sortKey = el.sort.value;
+    const collator = new Intl.Collator("ru");
+    state.filtered.sort((a, b) => {
+      if (sortKey === "reviews") return (b.reviews || 0) - (a.reviews || 0) || collator.compare(a.name, b.name);
+      if (sortKey === "name") return collator.compare(a.name, b.name);
+      if (sortKey === "address") return collator.compare(a.address || "", b.address || "");
+      // по умолчанию: рейтинг ↓, затем отзывы ↓
+      return (b.rating || 0) - (a.rating || 0) || (b.reviews || 0) - (a.reviews || 0);
+    });
+
+    renderStats();
+    renderGrid();
+  }
+
+  function renderStats() {
+    const rows = state.filtered;
+    el.stTotal.textContent = String(rows.length);
+
+    const rated = rows.filter((r) => r.rating !== null);
+    el.stAvg.textContent = rated.length
+      ? (rated.reduce((sum, r) => sum + r.rating, 0) / rated.length).toFixed(2)
+      : "—";
+
+    const reviews = rows.reduce((sum, r) => sum + (r.reviews || 0), 0);
+    el.stReviews.textContent = reviews ? reviews.toLocaleString(LANG === "ru" ? "ru-RU" : LANG) : "0";
+    el.stPhone.textContent = String(rows.filter((r) => r.phone).length);
+    el.stSpanish.textContent = String(rows.filter((r) => r.spanish).length);
+  }
+
+  function ratingClass(rating) {
+    if (rating === null) return "low";
+    if (rating >= 4.5) return "good";
+    if (rating >= 4.0) return "mid";
+    return "low";
+  }
+
+  function link(href, text, extra) {
+    const a = document.createElement("a");
+    a.href = href;
+    a.textContent = text;
+    a.rel = "noopener noreferrer";
+    a.target = "_blank";
+    if (extra) a.title = extra;
+    return a;
+  }
+
+  function card(row) {
+    const article = document.createElement("article");
+    article.className = "card";
+
+    const h2 = document.createElement("h2");
+    h2.textContent = row.name;
+    article.append(h2);
+
+    const row1 = document.createElement("div");
+    row1.className = "row";
+    if (row.rating !== null) {
+      const rating = document.createElement("span");
+      rating.className = "rating " + ratingClass(row.rating);
+      const star = document.createElement("span");
+      star.className = "star"; star.textContent = "★";
+      rating.append(star, document.createTextNode(row.rating.toFixed(1)));
+      row1.append(rating);
+    }
+    if (row.reviews !== null) {
+      const reviews = document.createElement("span");
+      reviews.className = "reviews";
+      reviews.textContent = row.reviews.toLocaleString(LANG === "ru" ? "ru-RU" : LANG) + " " +
+        reviewsWord(row.reviews);
+      row1.append(reviews);
+    }
+    if (row.category) {
+      const chip = document.createElement("span");
+      chip.className = "chip";
+      chip.textContent = categoryLabel(row.category);
+      row1.append(chip);
+    }
+    if (row1.childNodes.length) article.append(row1);
+
+    if (row.address) {
+      const address = document.createElement("div");
+      address.className = "addr";
+      address.textContent = "📍 " + row.address;
+      article.append(address);
+    }
+
+    // Часы работы: состояние («Открыто · Закроется в 20:00») и расписание по дням.
+    if (row.hours_status || row.hours) {
+      const hours = document.createElement("div");
+      hours.className = "hours";
+      if (row.hours_status) {
+        const status = document.createElement("span");
+        status.className = "hours-status" + (/открыто|open\b/i.test(row.hours_status) ? " open" : "");
+        status.textContent = "🕒 " + row.hours_status;
+        hours.append(status);
+      }
+      if (row.hours) {
+        const details = document.createElement("details");
+        const summary = document.createElement("summary");
+        summary.textContent = t("schedule");
+        const schedule = document.createElement("div");
+        schedule.className = "schedule";
+        // «вторник: 09:00–20:00; среда: …» → по строке на день
+        for (const slot of String(row.hours).split(/\s*;\s*/)) {
+          if (!slot.trim()) continue;
+          const line = document.createElement("div");
+          const [day, ...rest] = slot.split(":");
+          const dayEl = document.createElement("b");
+          dayEl.textContent = day.trim() + ": ";
+          line.append(dayEl, document.createTextNode(rest.join(":").trim()));
+          schedule.append(line);
+        }
+        details.append(summary, schedule);
+        hours.append(details);
+      }
+      article.append(hours);
+    }
+
+    // Признаки испанского языка: чип с расшифровкой в подсказке.
+    if (row.spanish) {
+      const spanish = document.createElement("div");
+      spanish.className = "lang";
+      const badge = document.createElement("span");
+      badge.className = "chip es";
+      badge.textContent = row.spanishStrong ? t("spanishYes") : t("spanishMaybe");
+      if (row.spanishEvidence) badge.title = row.spanishEvidence;
+      spanish.append(badge);
+      article.append(spanish);
+    }
+
+    const links = document.createElement("div");
+    links.className = "links";
+    if (row.phone) links.append(link("tel:" + row.phone.replace(/[^\d+]/g, ""), "☎ " + row.phone));
+    if (row.website) {
+      const href = /^https?:\/\//i.test(row.website) ? row.website : "https://" + row.website;
+      links.append(link(href, "🌐 " + row.website.replace(/^https?:\/\//i, "")));
+    }
+    if (row.url) links.append(link(row.url, "🗺 Google Maps"));
+    if (links.childNodes.length) article.append(links);
+
+    return article;
+  }
+
+  function renderGrid() {
+    const fragment = document.createDocumentFragment();
+    for (const row of state.filtered) fragment.append(card(row));
+    el.grid.textContent = "";
+    el.grid.append(fragment);
+    el.empty.classList.toggle("on", state.filtered.length === 0);
+  }
+
+  let filtersSaveTimer = null;
+  ["input", "change"].forEach((evt) => {
+    el.q.addEventListener(evt, applyFilters);
+    el.category.addEventListener(evt, applyFilters);
+    el.minRating.addEventListener(evt, applyFilters);
+    el.sort.addEventListener(evt, applyFilters);
+    el.lang.addEventListener(evt, applyFilters);
+  });
+  // Настройки вида сохраняем отдельно от данных и не на каждое нажатие клавиши.
+  ["input", "change"].forEach((evt) => {
+    [el.q, el.category, el.minRating, el.sort, el.lang].forEach((control) =>
+      control.addEventListener(evt, () => {
+        clearTimeout(filtersSaveTimer);
+        filtersSaveTimer = setTimeout(() => store.saveFilters(currentFilters()), 400);
+      }));
+  });
+
+  /* ------------------------------------------------------------------ */
+  /* Экспорт CSV (только отфильтрованные строки)                         */
+  /* ------------------------------------------------------------------ */
+  const CSV_FIELDS = ["name", "rating", "reviews", "category", "address", "phone", "website",
+                      "hours", "hoursStatus", "spanishText", "spanishEvidence", "url", "city", "query"];
+  const csvHead = () => (I18N[LANG] || I18N.en).csvHead;
+
+  el.csvBtn.addEventListener("click", () => {
+    const cell = (value) => {
+      const s = value === null || value === undefined ? "" : String(value);
+      return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    };
+    const lines = [csvHead().join(";")];
+    for (const row of state.filtered) {
+      const view = Object.assign({}, row, {
+        spanishText: row.spanish ? "✔" : "",
+        category: categoryLabel(row.category),
+      });
+      lines.push(CSV_FIELDS.map((f) => cell(view[f])).join(";"));
+    }
+
+    // BOM, чтобы Excel корректно открыл UTF-8
+    const blob = new Blob(["\ufeff" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = (state.fileName.replace(/\.json$/i, "") || "catalog") + ".csv";
+    document.body.append(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  });
+
+  /* ------------------------------------------------------------------ */
+  /* Старт: данные из salons.data.js → сохранённая копия → salons.json по http */
+  /* ------------------------------------------------------------------ */
+  const bundledData = () => {
+    const payload = window.__CATALOG_DATA__;
+    if (!payload) return null;
+    const raw = Array.isArray(payload) ? payload : payload.rows;
+    if (!Array.isArray(raw) || !raw.length) return null;
+    const rows = raw.map(normalize).filter(Boolean);
+    if (!rows.length) return null;
+    return {
+      rows,
+      source: (payload && payload.source) ? String(payload.source) : "salons.data.js",
+      generatedAt: (payload && payload.generatedAt) ? Date.parse(payload.generatedAt) || null : null,
+    };
+  };
+
+  function restoreFilters() {
+    const saved = store.loadFilters();
+    if (!saved) return;
+    if (typeof saved.q === "string") el.q.value = saved.q;
+    if (typeof saved.minRating === "string") el.minRating.value = saved.minRating;
+    if (typeof saved.sort === "string") el.sort.value = saved.sort;
+    if (typeof saved.lang === "string") el.lang.value = saved.lang;
+    if (typeof saved.category === "string" &&
+        [...el.category.options].some((option) => option.value === saved.category)) {
+      el.category.value = saved.category;
+    }
+  }
+
+  applyLanguage();
+
+  (async () => {
+    let record = null;
+    try { record = await store.loadRows(); } catch (err) { record = null; }
+    const bundled = bundledData();
+
+    // Кто свежее — тот и показываем: выгрузка из БД или копия из прошлого визита.
+    const storedTime = record ? (record.generatedAt || record.savedAt || 0) : 0;
+    const bundledTime = bundled ? (bundled.generatedAt || 0) : 0;
+
+    if (bundled && (!record || bundledTime > storedTime)) {
+      applyData(bundled.rows, bundled.source);
+      restoreFilters();
+      applyFilters();
+      await store.saveRows({
+        fileName: bundled.source,
+        savedAt: Date.now(),
+        generatedAt: bundled.generatedAt,
+        rows: bundled.rows,
+      });
+      const when = bundled.generatedAt ? " · " + t("exportedAgo") + " " +
+        relativeTime(bundled.generatedAt) : "";
+      showNotice(t("loadedAuto") + ": " + bundled.source + " · " +
+        bundled.rows.length + " " + recordsWord(bundled.rows.length) + when + ".");
+      return;
+    }
+
+    if (record) {
+      applyData(record.rows, record.fileName);
+      restoreFilters();
+      applyFilters();
+      const when = (record.generatedAt || record.savedAt)
+        ? " · " + t("savedAgo") + " " + relativeTime(record.generatedAt || record.savedAt) : "";
+      const where = store.mode === "localStorage" ? " (" + t("inLocalStorage") + ")" : "";
+      showNotice(t("restored") + ": " + record.fileName + " · " + record.rows.length + " " +
+        recordsWord(record.rows.length) + when + where + ".");
+      return;
+    }
+
+    if (store.warning) showNotice(store.warning);
+
+    // Нет ни выгрузки, ни сохранённой копии — если страница отдана по http, пробуем salons.json.
+    if (location.protocol === "file:") return;  // по file:// fetch локальных файлов запрещён
+    try {
+      const res = await fetch("../salons.json", { cache: "no-store" });
+      if (res.ok) loadText(await res.text(), "salons.json");
+    } catch (err) { /* нет файла — значит ждём ручной загрузки */ }
+  })();
+})();
+</script>
+</body>
+</html>
