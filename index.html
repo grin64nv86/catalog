@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Каталог организаций — Google Maps</title>
+<style>
+  :root {
+    --bg: #0f1116;
+    --panel: #171a22;
+    --panel-2: #1e222c;
+    --line: #2a2f3b;
+    --text: #e8eaf0;
+    --muted: #9aa3b2;
+    --accent: #4f8cff;
+    --accent-2: #7cf3c0;
+    --good: #3fbf7f;
+    --warn: #e0a33a;
+    --bad: #8b93a3;
+    --radius: 12px;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: radial-gradient(1200px 600px at 15% -10%, #1b2130 0%, var(--bg) 55%);
+    color: var(--text);
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    min-height: 100vh;
+  }
+
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  header {
+    padding: 28px 24px 18px;
+    border-bottom: 1px solid var(--line);
+    background: rgba(15, 17, 22, .72);
+    backdrop-filter: blur(6px);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .wrap { max-width: 1280px; margin: 0 auto; }
+
+  h1 { margin: 0 0 4px; font-size: 22px; letter-spacing: .2px; }
+  .sub { color: var(--muted); font-size: 13px; }
+  .sub b { color: var(--text); font-weight: 600; }
+
+  main { max-width: 1280px; margin: 0 auto; padding: 20px 24px 60px; }
+
+  /* --- Зона загрузки файла --- */
+  #dropzone {
+    border: 2px dashed var(--line);
+    border-radius: 16px;
+    padding: 44px 24px;
+    text-align: center;
+    background: var(--panel);
+    transition: border-color .15s, background .15s, transform .15s;
+    cursor: pointer;
+  }
+  #dropzone.drag { border-color: var(--accent); background: #1b2233; transform: scale(1.005); }
+  #dropzone .big { font-size: 17px; margin-bottom: 6px; }
+  #dropzone .hint { color: var(--muted); font-size: 13px; margin-top: 10px; }
+  #dropzone code {
+    background: var(--panel-2); border: 1px solid var(--line);
+    padding: 2px 6px; border-radius: 6px; font-size: 12.5px;
+  }
+
+  button, select, input[type="search"], input[type="text"] {
+    font: inherit;
+    color: var(--text);
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    padding: 8px 11px;
+    outline: none;
+  }
+  button { cursor: pointer; transition: border-color .15s, background .15s; }
+  button:hover { border-color: #3a4152; background: #232836; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  button.primary:hover { background: #3f7cf0; }
+  input[type="search"]:focus, input[type="text"]:focus, select:focus { border-color: var(--accent); }
+
+  .btnrow { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 16px; }
+
+  /* --- Панель управления --- */
+  #toolbar { display: none; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+  #toolbar.on { display: flex; }
+  #toolbar .grow { flex: 1 1 240px; min-width: 200px; }
+  #toolbar label { color: var(--muted); font-size: 12.5px; display: flex; align-items: center; gap: 6px; }
+  #filename { color: var(--muted); font-size: 12.5px; margin-left: auto; }
+
+  /* --- Сводка --- */
+  #stats { display: none; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 18px; }
+  #stats.on { display: grid; }
+  .stat { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; }
+  .stat .k { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+  .stat .v { font-size: 21px; font-weight: 700; margin-top: 3px; }
+
+  /* --- Каталог --- */
+  #grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 15px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    transition: border-color .15s, transform .15s;
+  }
+  .card:hover { border-color: #3a4152; transform: translateY(-1px); }
+  .card h2 { margin: 0; font-size: 16.5px; line-height: 1.3; }
+  .card .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+  .rating { display: inline-flex; align-items: center; gap: 5px; font-weight: 700; font-size: 14px; }
+  .rating .star { font-size: 13px; }
+  .rating.good { color: var(--good); }
+  .rating.mid { color: var(--warn); }
+  .rating.low { color: var(--bad); }
+  .reviews { color: var(--muted); font-size: 13px; }
+
+  .chip {
+    background: var(--panel-2); border: 1px solid var(--line);
+    color: var(--muted); font-size: 12px; padding: 2px 8px; border-radius: 999px;
+  }
+  .chip.es { color: #ffd9a0; border-color: #6a4a20; background: #2a2114; cursor: help; }
+
+  .addr { color: var(--muted); font-size: 13.5px; }
+
+  .hours { font-size: 13px; color: var(--muted); }
+  .hours-status { display: inline-block; }
+  .hours-status.open { color: var(--good); }
+  .hours details { margin-top: 4px; }
+  .hours summary { cursor: pointer; color: var(--accent); font-size: 12.5px; }
+  .hours .schedule { margin: 6px 0 0; padding-left: 2px; }
+  .hours .schedule div { padding: 1px 0; color: var(--muted); }
+  .hours .schedule b { color: var(--text); font-weight: 600; }
+  .links { display: flex; gap: 12px; flex-wrap: wrap; margin-top: auto; padding-top: 4px; font-size: 13.5px; }
+  .links a { white-space: nowrap; }
+
+  #empty { display: none; text-align: center; color: var(--muted); padding: 40px 0; }
+  #empty.on { display: block; }
+  #error { display: none; margin-top: 14px; padding: 12px 14px; border-radius: 10px;
+           background: #2a1b1b; border: 1px solid #5a2a2a; color: #ffb3b3; font-size: 13.5px; }
+  #error.on { display: block; }
+
+  #notice {
+    display: none; align-items: center; gap: 10px; flex-wrap: wrap;
+    margin-bottom: 14px; padding: 10px 14px; border-radius: 10px;
+    background: #16241f; border: 1px solid #23503f; color: #b9f0d5; font-size: 13.5px;
+  }
+  #notice.on { display: flex; }
+  #notice .spacer { flex: 1 1 auto; }
+  #notice button { background: #1b2c26; border-color: #2c5a48; color: #cdf5e4; padding: 6px 10px; }
+  #notice button:hover { background: #21382f; }
+  footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 0 24px 40px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <h1>Каталог организаций</h1>
+    <div class="sub" id="subtitle">Данные из JSON-файла, полученного скриптом <b>maps_scraper.py</b></div>
+  </div>
+</header>
+
+<main>
+  <!-- Шаг 1: загрузка JSON -->
+  <section id="dropzone" tabindex="0" role="button" aria-label="Загрузить JSON-файл">
+    <div class="big">Перетащите сюда <code>salons.json</code></div>
+    <div class="hint">или нажмите, чтобы выбрать файл. Поддерживается массив объектов или объект с полем <code>results</code>.
+      Данные сохраняются в браузере, поэтому после обновления страницы каталог откроется сам.</div>
+    <div class="btnrow">
+      <button class="primary" id="pickBtn" type="button">Выбрать файл</button>
+      <button id="demoBtn" type="button">Загрузить salons.json с сервера</button>
+    </div>
+    <input type="file" id="fileInput" accept=".json,application/json" hidden>
+  </section>
+  <div id="error"></div>
+
+  <!-- Плашка о восстановленных данных -->
+  <div id="notice">
+    <span id="noticeText"></span>
+    <span class="spacer"></span>
+    <button id="noticePick" type="button">Обновить файл</button>
+    <button id="noticeClear" type="button">Очистить</button>
+  </div>
+
+  <!-- Панель управления -->
+  <div id="toolbar">
+    <input type="search" id="q" class="grow" placeholder="Поиск по названию, категории, адресу, сайту…" autocomplete="off">
+    <label>Категория
+      <select id="category"><option value="">все</option></select>
+    </label>
+    <label>Рейтинг от
+      <select id="minRating">
+        <option value="0">любой</option>
+        <option value="3">3.0</option>
+        <option value="4">4.0</option>
+        <option value="4.5">4.5</option>
+        <option value="4.8">4.8</option>
+      </select>
+    </label>
+    <label>Язык
+      <select id="lang" title="Признаки испанского: атрибут заведения и отзывы на испанском — надёжные; испанская версия сайта — слабый">
+        <option value="">любой</option>
+        <option value="es">говорят по-испански (любой признак)</option>
+        <option value="es-strong">подтверждено (атрибут или отзывы)</option>
+        <option value="es-no">без испанского</option>
+      </select>
+    </label>
+    <label>Сортировка
+      <select id="sort">
+        <option value="rating">рейтинг ↓</option>
+        <option value="reviews">отзывы ↓</option>
+        <option value="name">название A→Z</option>
+        <option value="address">адрес A→Z</option>
+      </select>
+    </label>
+    <button id="csvBtn" type="button">Экспорт CSV</button>
+    <button id="resetBtn" type="button">Другой файл</button>
+    <span id="filename"></span>
+  </div>
+
+  <!-- Сводка -->
+  <section id="stats">
+    <div class="stat"><div class="k">Найдено</div><div class="v" id="stTotal">0</div></div>
+    <div class="stat"><div class="k">Средний рейтинг</div><div class="v" id="stAvg">—</div></div>
+    <div class="stat"><div class="k">Отзывов всего</div><div class="v" id="stReviews">0</div></div>
+    <div class="stat"><div class="k">С телефоном</div><div class="v" id="stPhone">0</div></div>
+    <div class="stat" title="Признаки: отзывы на испанском, атрибут Latino-owned, испанская версия сайта">
+      <div class="k">По-испански</div><div class="v" id="stSpanish">0</div></div>
+  </section>
+
+  <div id="grid"></div>
+  <div id="empty">
+    <div>Ничего не найдено — измените условия поиска или фильтры.</div>
+    <div class="btnrow"><button id="emptyReset" type="button">Сбросить фильтры</button></div>
+  </div>
+</main>
+
+<footer>
+  Статическая страница, работает без интернета и без сервера: данные читаются прямо в браузере.
+</footer>
+
+<!-- Данные, созданные export_json.py: локальный <script src> работает и по file://, в отличие от fetch -->
+<script src="salons.data.js?v=2026-10-14T12:15:57+00:00" onerror="window.__CATALOG_DATA_MISSING__ = true"></script>
+<script>
+(() => {
+  "use strict";
+
+  /* ------------------------------------------------------------------ */
+  /* Состояние                                                           */
+  /* ------------------------------------------------------------------ */
+  const state = { rows: [], filtered: [], fileName: "" };
+
+  const $ = (id) => document.getElementById(id);
+  const el = {
+    dropzone: $("dropzone"), pickBtn: $("pickBtn"), demoBtn: $("demoBtn"), fileInput: $("fileInput"),
+    toolbar: $("toolbar"), stats: $("stats"), grid: $("grid"), empty: $("empty"), error: $("error"),
+    q: $("q"), category: $("category"), minRating: $("minRating"), sort: $("sort"), lang: $("lang"),
+    csvBtn: $("csvBtn"), resetBtn: $("resetBtn"), filename: $("filename"),
+    subtitle: $("subtitle"), stTotal: $("stTotal"), stAvg: $("stAvg"),
+    stReviews: $("stReviews"), stPhone: $("stPhone"), stSpanish: $("stSpanish"),
+    notice: $("notice"), noticeText: $("noticeText"), noticePick: $("noticePick"), noticeClear: $("noticeClear"),
+    emptyReset: $("emptyReset"),
+  };
+
+  /* ------------------------------------------------------------------ */
+  /* Хранилище: данные переживают перезагрузку страницы                  */
+  /* ------------------------------------------------------------------ */
+  const DB_NAME = "maps-catalog";
+  const DB_STORE = "state";
+  const DB_RECORD = "last";
+  const LS_ROWS = "maps-catalog/rows";     // запасной вариант, если IndexedDB недоступен
+  const LS_FILTERS = "maps-catalog/filters"; // мелкие настройки вида — отдельно
+
+  function idbRequest(request) {
+    return new Promise((resolve, reject) => {
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error || new Error("IndexedDB request failed"));
+    });
+  }
+
+  function idbOpen() {
+    return new Promise((resolve, reject) => {
+      if (!("indexedDB" in window)) { reject(new Error("IndexedDB недоступен")); return; }
+      const request = indexedDB.open(DB_NAME, 1);
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains(DB_STORE)) db.createObjectStore(DB_STORE, { keyPath: "id" });
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error || new Error("IndexedDB не открылся"));
+      request.onblocked = () => reject(new Error("IndexedDB заблокирован"));
+    });
+  }
+
+  const store = {
+    mode: "",           // "idb" | "localStorage" | "off"
+    warning: "",
+
+    async saveRows(payload) {
+      try {
+        const db = await idbOpen();
+        try {
+          const tx = db.transaction(DB_STORE, "readwrite");
+          tx.objectStore(DB_STORE).put({ id: DB_RECORD, ...payload });
+          await new Promise((resolve, reject) => {
+            tx.oncomplete = resolve;
+            tx.onerror = () => reject(tx.error);
+            tx.onabort = () => reject(tx.error);
+          });
+        } finally { db.close(); }
+        this.mode = "idb";
+        this.warning = "";
+        return true;
+      } catch (idbError) {
+        try {
+          localStorage.setItem(LS_ROWS, JSON.stringify(payload));
+          this.mode = "localStorage";
+          this.warning = "";
+          return true;
+        } catch (lsError) {
+          this.mode = "off";
+          this.warning = "Браузер не смог сохранить данные (" + (lsError.name || lsError.message) +
+            ") — после обновления страницы файл придётся загрузить заново.";
+          return false;
+        }
+      }
+    },
+
+    async loadRows() {
+      try {
+        const db = await idbOpen();
+        try {
+          const record = await idbRequest(db.transaction(DB_STORE, "readonly").objectStore(DB_STORE).get(DB_RECORD));
+          if (record && Array.isArray(record.rows) && record.rows.length) { this.mode = "idb"; return record; }
+        } finally { db.close(); }
+      } catch (err) { /* переходим к localStorage */ }
+
+      try {
+        const raw = localStorage.getItem(LS_ROWS);
+        if (raw) {
+          const record = JSON.parse(raw);
+          if (record && Array.isArray(record.rows) && record.rows.length) { this.mode = "localStorage"; return record; }
+        }
+      } catch (err) { /* нет сохранённых данных */ }
+      return null;
+    },
+
+    async clear() {
+      try {
+        const db = await idbOpen();
+        try {
+          const tx = db.transaction(DB_STORE, "readwrite");
+          tx.objectStore(DB_STORE).delete(DB_RECORD);
+          await new Promise((resolve, reject) => {
+            tx.oncomplete = resolve;
+            tx.onerror = () => reject(tx.error);
+          });
+        } finally { db.close(); }
+      } catch (err) { /* нечего чистить */ }
+      try { localStorage.removeItem(LS_ROWS); } catch (err) { /* ignore */ }
+    },
+
+    saveFilters(filters) {
+      try { localStorage.setItem(LS_FILTERS, JSON.stringify(filters)); } catch (err) { /* ignore */ }
+    },
+
+    loadFilters() {
+      try {
+        const raw = localStorage.getItem(LS_FILTERS);
+        return raw ? JSON.parse(raw) : null;
+      } catch (err) { return null; }
+    },
+  };
+
+  function currentFilters() {
+    return { q: el.q.value, category: el.category.value, minRating: el.minRating.value,
+             sort: el.sort.value, lang: el.lang.value };
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Нормализация записей из JSON                                        */
+  /* ------------------------------------------------------------------ */
+  const NA = new Set(["", "н/д", "n/a", "na", "none", "null", "undefined", "-"]);
+
+  function pick(obj, keys) {
+    for (const key of keys) {
+      if (obj[key] !== undefined && obj[key] !== null) {
+        const value = String(obj[key]).trim();
+        if (value && !NA.has(value.toLowerCase())) return value;
+      }
+    }
+    return "";
+  }
+
+  function num(value) {
+    if (value === undefined || value === null) return null;
+    const n = parseFloat(String(value).replace(",", ".").replace(/\s/g, ""));
+    return Number.isFinite(n) ? n : null;
+  }
+
+  function normalize(raw) {
+    if (!raw || typeof raw !== "object") return null;
+    const name = pick(raw, ["name", "title", "Название", "название"]);
+    const address = pick(raw, ["address", "addr", "Адрес", "адрес"]);
+    const category = pick(raw, ["category", "type", "Категория", "категория"]);
+    const website = pick(raw, ["website", "site", "url_site", "Сайт", "сайт"]);
+    const mapsUrl = pick(raw, ["url", "maps_url", "link", "Ссылка", "ссылка"]);
+    const info = pick(raw, ["info", "raw"]);
+    const hours = pick(raw, ["hours", "opening_hours", "schedule", "Часы работы", "часы работы"]);
+    const hoursStatus = pick(raw, ["hours_status", "hours_now", "open_now", "Статус часов"]);
+    const spanishRaw = raw.lang_es ?? raw.spanish ?? raw.испанский ?? 0;
+    const spanish = spanishRaw === true || spanishRaw === 1 || String(spanishRaw).toLowerCase() === "да";
+    const spanishEvidence = pick(raw, ["lang_es_evidence", "spanish_evidence", "Обоснование языка"]);
+    const spanishSources = pick(raw, ["lang_es_sources", "spanish_sources"]);
+    let reviews = num(pick(raw, ["reviews", "review_count", "reviews_count", "Отзывы", "отзывы"]));
+    let rating = num(pick(raw, ["rating", "stars", "Рейтинг", "рейтинг"]));
+
+    // Если rating/reviews не разобрались, пробуем вытащить их из строки info.
+    if ((rating === null || reviews === null) && info) {
+      if (rating === null) {
+        const m = info.match(/(\d[.,]\d)/);
+        if (m) rating = num(m[1]);
+      }
+      if (reviews === null) {
+        const m = info.match(/\(([\d\s\u00a0.,]+)\)/) || info.match(/([\d\s\u00a0.,]{1,12})\s*(?:reviews?|отзыв)/i);
+        if (m) reviews = num(m[1].replace(/[^\d]/g, ""));
+      }
+    }
+
+    if (!name && !address && !mapsUrl) return null;
+
+    return {
+      name: name || "(без названия)",
+      rating,
+      reviews,
+      category,
+      address: address || (info && /[a-zA-Zа-яА-Я]/.test(info) ? info : ""),
+      phone: pick(raw, ["phone", "tel", "Телефон", "телефон"]),
+      website,
+      hours,
+      hoursStatus,
+      spanish,
+      spanishEvidence,
+      spanishSources,
+      // Сильный признак: атрибут заведения или отзывы на испанском.
+      spanishStrong: /attr|reviews/.test(spanishSources),
+      url: mapsUrl,
+      city: pick(raw, ["city", "Город", "город"]),
+      query: pick(raw, ["query", "Запрос", "запрос"]),
+    };
+  }
+
+  function extractRows(parsed) {
+    let list = parsed;
+    if (!Array.isArray(list)) {
+      for (const key of ["results", "data", "items", "places", "rows"]) {
+        if (Array.isArray(parsed && parsed[key])) { list = parsed[key]; break; }
+      }
+    }
+    if (!Array.isArray(list)) throw new Error("В файле нет массива с организациями.");
+    return list.map(normalize).filter(Boolean);
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Загрузка                                                            */
+  /* ------------------------------------------------------------------ */
+  function showError(message) {
+    el.error.textContent = message;
+    el.error.classList.add("on");
+  }
+  function clearError() { el.error.classList.remove("on"); el.error.textContent = ""; }
+
+  /* Русские склонения: 1 запись, 2 записи, 11 записей. */
+  function plural(count, forms) {
+    const n = Math.abs(Math.trunc(count));
+    const tail100 = n % 100;
+    const tail10 = n % 10;
+    if (tail100 >= 11 && tail100 <= 14) return forms[2];
+    if (tail10 === 1) return forms[0];
+    if (tail10 >= 2 && tail10 <= 4) return forms[1];
+    return forms[2];
+  }
+
+  function relativeTime(timestamp) {    const seconds = Math.max(0, Math.round((Date.now() - timestamp) / 1000));
+    if (seconds < 60) return "только что";
+    const minutes = Math.round(seconds / 60);
+    if (minutes < 60) return minutes + " мин назад";
+    const hours = Math.round(minutes / 60);
+    if (hours < 24) return hours + " ч назад";
+    return new Date(timestamp).toLocaleString("ru-RU");
+  }
+
+  function showNotice(message) {
+    el.noticeText.textContent = message;
+    el.notice.classList.toggle("on", Boolean(message));
+  }
+
+  /* Отрисовка уже готового набора записей (после загрузки файла или восстановления). */
+  function applyData(rows, fileName) {
+    state.rows = rows;
+    state.fileName = fileName || "данные";
+    el.filename.textContent = state.fileName;
+    el.dropzone.style.display = "none";
+    el.toolbar.classList.add("on");
+    el.stats.classList.add("on");
+    buildCategoryOptions();
+
+    const sources = new Set(rows.map((r) => [r.query, r.city].filter(Boolean).join(" · ")).filter(Boolean));
+    el.subtitle.textContent = "";
+    el.subtitle.append(document.createTextNode("Источник: "));
+    const b = document.createElement("b");
+    b.textContent = state.fileName;
+    el.subtitle.append(b, document.createTextNode(sources.size ? " · " + [...sources].join("; ") : ""));
+  }
+
+  function loadText(text, fileName) {
+    let parsed;
+    try {
+      parsed = JSON.parse(text);
+    } catch (err) {
+      showError("Не удалось прочитать JSON: " + err.message);
+      return;
+    }
+    let rows;
+    try {
+      rows = extractRows(parsed);
+    } catch (err) {
+      showError(err.message);
+      return;
+    }
+    if (!rows.length) { showError("Файл прочитан, но подходящих записей не найдено."); return; }
+
+    clearError();
+    showNotice("");
+    applyData(rows, fileName);
+
+    // Сбрасываем фильтры прошлого файла и сохраняем новый набор в браузере.
+    el.q.value = ""; el.minRating.value = "0"; el.sort.value = "rating";
+    el.category.value = ""; el.lang.value = "";
+    store.saveFilters(currentFilters());
+    applyFilters();
+    persistRows();
+
+    // Данные слишком большие для хранилища — предупреждаем честно.
+    if (store.warning) showNotice(store.warning);
+  }
+
+  async function persistRows() {
+    if (!state.rows.length) return false;
+    return store.saveRows({ fileName: state.fileName, savedAt: Date.now(), rows: state.rows });
+  }
+
+  function loadFile(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => loadText(String(reader.result), file.name);
+    reader.onerror = () => showError("Не удалось прочитать файл " + file.name);
+    reader.readAsText(file, "utf-8");
+  }
+
+  el.pickBtn.addEventListener("click", (e) => { e.stopPropagation(); el.fileInput.click(); });
+  el.dropzone.addEventListener("click", () => el.fileInput.click());
+  el.dropzone.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); el.fileInput.click(); }
+  });
+  el.fileInput.addEventListener("change", () => loadFile(el.fileInput.files[0]));
+
+  ["dragenter", "dragover"].forEach((evt) =>
+    el.dropzone.addEventListener(evt, (e) => { e.preventDefault(); el.dropzone.classList.add("drag"); }));
+  ["dragleave", "drop"].forEach((evt) =>
+    el.dropzone.addEventListener(evt, (e) => { e.preventDefault(); el.dropzone.classList.remove("drag"); }));
+  el.dropzone.addEventListener("drop", (e) => {
+    const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (file) loadFile(file);
+  });
+  // Файл, брошенный в любое место страницы, тоже принимаем.
+  // Если бросили прямо в зону загрузки — её собственный обработчик уже сработал.
+  document.addEventListener("dragover", (e) => e.preventDefault());
+  document.addEventListener("drop", (e) => {
+    e.preventDefault();
+    if (el.dropzone.contains(e.target)) return;
+    const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (file) loadFile(file);
+  });
+
+  el.demoBtn.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    try {
+      const res = await fetch("salons.json", { cache: "no-store" });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      loadText(await res.text(), "salons.json");
+    } catch (err) {
+      showError("Не удалось загрузить salons.json автоматически (" + err.message +
+        "). Откройте страницу через локальный сервер (python -m http.server) или выберите файл вручную.");
+    }
+  });
+
+  el.resetBtn.addEventListener("click", async () => {
+    await store.clear();
+    state.rows = []; state.filtered = []; state.fileName = "";
+    el.grid.textContent = ""; el.fileInput.value = "";
+    el.toolbar.classList.remove("on"); el.stats.classList.remove("on");
+    el.dropzone.style.display = "";
+    el.filename.textContent = "";
+    el.q.value = ""; el.category.value = ""; el.minRating.value = "0"; el.sort.value = "rating";
+    el.lang.value = "";
+    el.subtitle.textContent = "Данные из JSON-файла, полученного скриптом maps_scraper.py";
+    showNotice("");
+    clearError();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  el.noticeClear.addEventListener("click", () => el.resetBtn.click());
+  el.noticePick.addEventListener("click", () => el.fileInput.click());
+
+  // Если фильтры скрыли все записи, даём выход одним нажатием.
+  el.emptyReset.addEventListener("click", () => {
+    el.q.value = ""; el.category.value = ""; el.minRating.value = "0"; el.sort.value = "rating";
+    el.lang.value = "";
+    store.saveFilters(currentFilters());
+    applyFilters();
+  });
+
+  /* ------------------------------------------------------------------ */
+  /* Фильтры, сортировка, отрисовка                                      */
+  /* ------------------------------------------------------------------ */
+  function buildCategoryOptions() {
+    const categories = [...new Set(state.rows.map((r) => r.category).filter(Boolean))].sort((a, b) => a.localeCompare(b, "ru"));
+    el.category.textContent = "";
+    const all = document.createElement("option");
+    all.value = ""; all.textContent = "все (" + state.rows.length + ")";
+    el.category.append(all);
+    for (const c of categories) {
+      const option = document.createElement("option");
+      option.value = c; option.textContent = c;
+      el.category.append(option);
+    }
+  }
+
+  function applyFilters() {
+    const needle = el.q.value.trim().toLowerCase();
+    const category = el.category.value;
+    const minRating = parseFloat(el.minRating.value) || 0;
+    const lang = el.lang.value;
+
+    state.filtered = state.rows.filter((row) => {
+      if (category && row.category !== category) return false;
+      if (minRating && (row.rating === null || row.rating < minRating)) return false;
+      if (lang === "es" && !row.spanish) return false;
+      if (lang === "es-strong" && !row.spanishStrong) return false;
+      if (lang === "es-no" && row.spanish) return false;
+      if (!needle) return true;
+      // «query» в поиск не включаем: он одинаков у всех строк одного парсинга.
+      const haystack = [row.name, row.category, row.address, row.website, row.phone, row.city,
+                        row.hours, row.hoursStatus]
+        .filter(Boolean).join(" ").toLowerCase();
+      return needle.split(/\s+/).every((token) => haystack.includes(token));
+    });
+
+    const sortKey = el.sort.value;
+    const collator = new Intl.Collator("ru");
+    state.filtered.sort((a, b) => {
+      if (sortKey === "reviews") return (b.reviews || 0) - (a.reviews || 0) || collator.compare(a.name, b.name);
+      if (sortKey === "name") return collator.compare(a.name, b.name);
+      if (sortKey === "address") return collator.compare(a.address || "", b.address || "");
+      // по умолчанию: рейтинг ↓, затем отзывы ↓
+      return (b.rating || 0) - (a.rating || 0) || (b.reviews || 0) - (a.reviews || 0);
+    });
+
+    renderStats();
+    renderGrid();
+  }
+
+  function renderStats() {
+    const rows = state.filtered;
+    el.stTotal.textContent = String(rows.length);
+
+    const rated = rows.filter((r) => r.rating !== null);
+    el.stAvg.textContent = rated.length
+      ? (rated.reduce((sum, r) => sum + r.rating, 0) / rated.length).toFixed(2)
+      : "—";
+
+    const reviews = rows.reduce((sum, r) => sum + (r.reviews || 0), 0);
+    el.stReviews.textContent = reviews ? reviews.toLocaleString("ru-RU") : "0";
+    el.stPhone.textContent = String(rows.filter((r) => r.phone).length);
+    el.stSpanish.textContent = String(rows.filter((r) => r.spanish).length);
+  }
+
+  function ratingClass(rating) {
+    if (rating === null) return "low";
+    if (rating >= 4.5) return "good";
+    if (rating >= 4.0) return "mid";
+    return "low";
+  }
+
+  function link(href, text, extra) {
+    const a = document.createElement("a");
+    a.href = href;
+    a.textContent = text;
+    a.rel = "noopener noreferrer";
+    a.target = "_blank";
+    if (extra) a.title = extra;
+    return a;
+  }
+
+  function card(row) {
+    const article = document.createElement("article");
+    article.className = "card";
+
+    const h2 = document.createElement("h2");
+    h2.textContent = row.name;
+    article.append(h2);
+
+    const row1 = document.createElement("div");
+    row1.className = "row";
+    if (row.rating !== null) {
+      const rating = document.createElement("span");
+      rating.className = "rating " + ratingClass(row.rating);
+      const star = document.createElement("span");
+      star.className = "star"; star.textContent = "★";
+      rating.append(star, document.createTextNode(row.rating.toFixed(1)));
+      row1.append(rating);
+    }
+    if (row.reviews !== null) {
+      const reviews = document.createElement("span");
+      reviews.className = "reviews";
+      reviews.textContent = row.reviews.toLocaleString("ru-RU") + " " +
+        plural(row.reviews, ["отзыв", "отзыва", "отзывов"]);
+      row1.append(reviews);
+    }
+    if (row.category) {
+      const chip = document.createElement("span");
+      chip.className = "chip";
+      chip.textContent = row.category;
+      row1.append(chip);
+    }
+    if (row1.childNodes.length) article.append(row1);
+
+    if (row.address) {
+      const address = document.createElement("div");
+      address.className = "addr";
+      address.textContent = "📍 " + row.address;
+      article.append(address);
+    }
+
+    // Часы работы: состояние («Открыто · Закроется в 20:00») и расписание по дням.
+    if (row.hours_status || row.hours) {
+      const hours = document.createElement("div");
+      hours.className = "hours";
+      if (row.hours_status) {
+        const status = document.createElement("span");
+        status.className = "hours-status" + (/открыто|open\b/i.test(row.hours_status) ? " open" : "");
+        status.textContent = "🕒 " + row.hours_status;
+        hours.append(status);
+      }
+      if (row.hours) {
+        const details = document.createElement("details");
+        const summary = document.createElement("summary");
+        summary.textContent = "Расписание";
+        const schedule = document.createElement("div");
+        schedule.className = "schedule";
+        // «вторник: 09:00–20:00; среда: …» → по строке на день
+        for (const slot of String(row.hours).split(/\s*;\s*/)) {
+          if (!slot.trim()) continue;
+          const line = document.createElement("div");
+          const [day, ...rest] = slot.split(":");
+          const dayEl = document.createElement("b");
+          dayEl.textContent = day.trim() + ": ";
+          line.append(dayEl, document.createTextNode(rest.join(":").trim()));
+          schedule.append(line);
+        }
+        details.append(summary, schedule);
+        hours.append(details);
+      }
+      article.append(hours);
+    }
+
+    // Признаки испанского языка: чип с расшифровкой в подсказке.
+    if (row.spanish) {
+      const spanish = document.createElement("div");
+      spanish.className = "lang";
+      const badge = document.createElement("span");
+      badge.className = "chip es";
+      badge.textContent = row.spanishStrong
+        ? "🇪🇸 говорят по-испански"
+        : "🇪🇸 возможно, по-испански";
+      if (row.spanishEvidence) badge.title = row.spanishEvidence;
+      spanish.append(badge);
+      article.append(spanish);
+    }
+
+    const links = document.createElement("div");
+    links.className = "links";
+    if (row.phone) links.append(link("tel:" + row.phone.replace(/[^\d+]/g, ""), "☎ " + row.phone));
+    if (row.website) {
+      const href = /^https?:\/\//i.test(row.website) ? row.website : "https://" + row.website;
+      links.append(link(href, "🌐 " + row.website.replace(/^https?:\/\//i, "")));
+    }
+    if (row.url) links.append(link(row.url, "🗺 Google Maps"));
+    if (links.childNodes.length) article.append(links);
+
+    return article;
+  }
+
+  function renderGrid() {
+    const fragment = document.createDocumentFragment();
+    for (const row of state.filtered) fragment.append(card(row));
+    el.grid.textContent = "";
+    el.grid.append(fragment);
+    el.empty.classList.toggle("on", state.filtered.length === 0);
+  }
+
+  let filtersSaveTimer = null;
+  ["input", "change"].forEach((evt) => {
+    el.q.addEventListener(evt, applyFilters);
+    el.category.addEventListener(evt, applyFilters);
+    el.minRating.addEventListener(evt, applyFilters);
+    el.sort.addEventListener(evt, applyFilters);
+    el.lang.addEventListener(evt, applyFilters);
+  });
+  // Настройки вида сохраняем отдельно от данных и не на каждое нажатие клавиши.
+  ["input", "change"].forEach((evt) => {
+    [el.q, el.category, el.minRating, el.sort, el.lang].forEach((control) =>
+      control.addEventListener(evt, () => {
+        clearTimeout(filtersSaveTimer);
+        filtersSaveTimer = setTimeout(() => store.saveFilters(currentFilters()), 400);
+      }));
+  });
+
+  /* ------------------------------------------------------------------ */
+  /* Экспорт CSV (только отфильтрованные строки)                         */
+  /* ------------------------------------------------------------------ */
+  const CSV_FIELDS = ["name", "rating", "reviews", "category", "address", "phone", "website",
+                      "hours", "hoursStatus", "spanishText", "spanishEvidence", "url", "city", "query"];
+  const CSV_HEAD = ["Название", "Рейтинг", "Отзывов", "Категория", "Адрес", "Телефон", "Сайт",
+                    "Часы работы", "Сейчас", "По-испански", "Признак языка", "Google Maps",
+                    "Город", "Запрос"];
+
+  el.csvBtn.addEventListener("click", () => {
+    const cell = (value) => {
+      const s = value === null || value === undefined ? "" : String(value);
+      return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    };
+    const lines = [CSV_HEAD.join(";")];
+    for (const row of state.filtered) {
+      const view = Object.assign({}, row, { spanishText: row.spanish ? "да" : "нет" });
+      lines.push(CSV_FIELDS.map((f) => cell(view[f])).join(";"));
+    }
+
+    // BOM, чтобы Excel корректно открыл UTF-8
+    const blob = new Blob(["\ufeff" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = (state.fileName.replace(/\.json$/i, "") || "catalog") + ".csv";
+    document.body.append(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  });
+
+  /* ------------------------------------------------------------------ */
+  /* Старт: данные из salons.data.js → сохранённая копия → salons.json по http */
+  /* ------------------------------------------------------------------ */
+  const bundledData = () => {
+    const payload = window.__CATALOG_DATA__;
+    if (!payload) return null;
+    const raw = Array.isArray(payload) ? payload : payload.rows;
+    if (!Array.isArray(raw) || !raw.length) return null;
+    const rows = raw.map(normalize).filter(Boolean);
+    if (!rows.length) return null;
+    return {
+      rows,
+      source: (payload && payload.source) ? String(payload.source) : "salons.data.js",
+      generatedAt: (payload && payload.generatedAt) ? Date.parse(payload.generatedAt) || null : null,
+    };
+  };
+
+  function restoreFilters() {
+    const saved = store.loadFilters();
+    if (!saved) return;
+    if (typeof saved.q === "string") el.q.value = saved.q;
+    if (typeof saved.minRating === "string") el.minRating.value = saved.minRating;
+    if (typeof saved.sort === "string") el.sort.value = saved.sort;
+    if (typeof saved.lang === "string") el.lang.value = saved.lang;
+    if (typeof saved.category === "string" &&
+        [...el.category.options].some((option) => option.value === saved.category)) {
+      el.category.value = saved.category;
+    }
+  }
+
+  (async () => {
+    let record = null;
+    try { record = await store.loadRows(); } catch (err) { record = null; }
+    const bundled = bundledData();
+
+    // Кто свежее — тот и показываем: выгрузка из БД или копия из прошлого визита.
+    const storedTime = record ? (record.generatedAt || record.savedAt || 0) : 0;
+    const bundledTime = bundled ? (bundled.generatedAt || 0) : 0;
+
+    if (bundled && (!record || bundledTime > storedTime)) {
+      applyData(bundled.rows, bundled.source);
+      restoreFilters();
+      applyFilters();
+      await store.saveRows({
+        fileName: bundled.source,
+        savedAt: Date.now(),
+        generatedAt: bundled.generatedAt,
+        rows: bundled.rows,
+      });
+      const when = bundled.generatedAt ? " · выгружено " + relativeTime(bundled.generatedAt) : "";
+      showNotice("Каталог загружен автоматически: " + bundled.source + " · " +
+        bundled.rows.length + " " + plural(bundled.rows.length, ["запись", "записи", "записей"]) +
+        when + ".");
+      return;
+    }
+
+    if (record) {
+      applyData(record.rows, record.fileName);
+      restoreFilters();
+      applyFilters();
+      const when = (record.generatedAt || record.savedAt)
+        ? " · сохранено " + relativeTime(record.generatedAt || record.savedAt) : "";
+      const where = store.mode === "localStorage" ? " (в localStorage)" : "";
+      showNotice("Каталог восстановлен: " + record.fileName + " · " + record.rows.length + " " +
+        plural(record.rows.length, ["запись", "записи", "записей"]) + when + where + ".");
+      return;
+    }
+
+    if (store.warning) showNotice(store.warning);
+
+    // Нет ни выгрузки, ни сохранённой копии — если страница отдана по http, пробуем salons.json.
+    if (location.protocol === "file:") return;  // по file:// fetch локальных файлов запрещён
+    try {
+      const res = await fetch("salons.json", { cache: "no-store" });
+      if (res.ok) loadText(await res.text(), "salons.json");
+    } catch (err) { /* нет файла — значит ждём ручной загрузки */ }
+  })();
+})();
+</script>
+</body>
+</html>

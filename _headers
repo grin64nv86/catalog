@@ -1,0 +1,22 @@
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  X-Frame-Options: SAMEORIGIN
+  Permissions-Policy: geolocation=(), microphone=(), camera=()
+
+# Данные обновляются при каждой публикации — кэш только мешает.
+/salons.data.js
+  Cache-Control: no-cache
+
+/salons.json
+  Cache-Control: no-cache
+
+/version.txt
+  Cache-Control: no-cache
+
+# Сама страница каталога тоже не должна залипать надолго.
+/
+  Cache-Control: no-cache
+
+/index.html
+  Cache-Control: no-cache
