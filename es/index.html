@@ -195,6 +195,9 @@
   <!-- Панель управления -->
   <div id="toolbar">
     <input type="search" id="q" class="grow" placeholder="Поиск по названию, категории, адресу, сайту…" data-i18n-placeholder="searchPlaceholder" autocomplete="off">
+    <label><span data-i18n="filterCity">Город</span>
+      <select id="city"><option value="">все</option></select>
+    </label>
     <label><span data-i18n="filterCategory">Категория</span>
       <select id="category"><option value="">все</option></select>
     </label>
@@ -238,7 +241,7 @@
 </footer>
 
 <!-- Данные, созданные export_json.py: локальный <script src> работает и по file://, в отличие от fetch -->
-<script src="../salons.data.js?v=2026-10-14T18:41:37+00:00" onerror="window.__CATALOG_DATA_MISSING__ = true"></script>
+<script src="../salons.data.js?v=2026-10-14T18:56:25+00:00" onerror="window.__CATALOG_DATA_MISSING__ = true"></script>
 <script>
 (() => {
   "use strict";
@@ -257,6 +260,8 @@
       dropHint: "или нажмите, чтобы выбрать файл. Поддерживается массив объектов или объект с полем",
       dropHint2: "Данные сохраняются в браузере, поэтому после обновления страницы каталог откроется сам.",
       searchPlaceholder: "Поиск по названию, категории, адресу, сайту…",
+      filterCity: "Город",
+      allCities: "все города",
       filterCategory: "Категория",
       filterRating: "Рейтинг от",
       filterSpanish: "Испанский",
@@ -300,6 +305,8 @@
       dropHint: "here or click to choose a file. An array of objects or an object with a",
       dropHint2: "The data is kept in your browser, so the catalog opens by itself after a reload.",
       searchPlaceholder: "Search by name, category, address, website…",
+      filterCity: "City",
+      allCities: "all cities",
       filterCategory: "Category",
       filterRating: "Rating from",
       filterSpanish: "Spanish",
@@ -340,6 +347,8 @@
       dropHint: "o haz clic para elegir un archivo. Se admite un array de objetos o un objeto con",
       dropHint2: "Los datos se guardan en el navegador, así que el catálogo se abre solo al recargar.",
       searchPlaceholder: "Buscar por nombre, categoría, dirección, web…",
+      filterCity: "Ciudad",
+      allCities: "todas las ciudades",
       filterCategory: "Categoría",
       filterRating: "Valoración desde",
       filterSpanish: "Español",
@@ -385,6 +394,7 @@
     "cleaning": { ru: "Уборка", en: "Cleaning services", es: "Limpieza" },
     "coffee_shop": { ru: "Кофейня", en: "Coffee shop", es: "Cafetería" },
     "concrete": { ru: "Бетонные работы", en: "Concrete work", es: "Trabajos de hormigón" },
+    "construction": { ru: "Строительство", en: "Construction", es: "Construcción" },
     "cosmetic_dentist": { ru: "Эстетическая стоматология", en: "Cosmetic dentist", es: "Dentista estético" },
     "coworking": { ru: "Коворкинг", en: "Coworking space", es: "Espacio de coworking" },
     "dentist": { ru: "Стоматология", en: "Dentist", es: "Dentista" },
@@ -396,6 +406,7 @@
     "hair_salon": { ru: "Парикмахерская", en: "Hair salon", es: "Peluquería" },
     "handyman": { ru: "Мастер на час", en: "Handyman", es: "Maestro de reparaciones" },
     "home_care": { ru: "Уход на дому", en: "Home care", es: "Cuidado a domicilio" },
+    "hospital": { ru: "Больница", en: "Hospital", es: "Hospital" },
     "hvac": { ru: "Кондиционеры и отопление", en: "AC & heating", es: "Aire y calefacción" },
     "landscaping": { ru: "Ландшафт и двор", en: "Landscaping", es: "Jardinería" },
     "medical_clinic": { ru: "Медицинская клиника", en: "Medical clinic", es: "Clínica médica" },
@@ -404,6 +415,7 @@
     "pain_clinic": { ru: "Клиника боли", en: "Pain clinic", es: "Clínica del dolor" },
     "pediatric_dentist": { ru: "Детская стоматология", en: "Pediatric dentist", es: "Dentista infantil" },
     "plumber": { ru: "Сантехник", en: "Plumber", es: "Fontanero" },
+    "restaurant": { ru: "Ресторан", en: "Restaurant", es: "Restaurante" },
     "spa": { ru: "Спа", en: "Spa", es: "Spa" },
     "tanning_salon": { ru: "Солярий", en: "Tanning salon", es: "Solárium" },
     "veterinarian": { ru: "Ветеринарная клиника", en: "Veterinarian", es: "Veterinario" },
@@ -514,6 +526,12 @@
     }).join("; ");
   }
 
+  function localizePlace(value) {
+    if (!value) return "";
+    const forms = PLACES_I18N[String(value).trim().toLowerCase()];
+    return forms ? (forms[LANG] || forms.en) : value;
+  }
+
   function localizeAddress(text) {
     if (!text) return "";
     return String(text).split(",").map((segment) => {
@@ -585,7 +603,8 @@
   const $ = (id) => document.getElementById(id);
   const el = {
     toolbar: $("toolbar"), grid: $("grid"), empty: $("empty"), error: $("error"),
-    q: $("q"), category: $("category"), minRating: $("minRating"), sort: $("sort"), lang: $("lang"),
+    q: $("q"), city: $("city"), category: $("category"), minRating: $("minRating"),
+    sort: $("sort"), lang: $("lang"),
     langs: $("langs"),
     subtitle: $("subtitle"),
     emptyReset: $("emptyReset"),
@@ -606,8 +625,8 @@
   };
 
   function currentFilters() {
-    return { q: el.q.value, category: el.category.value, minRating: el.minRating.value,
-             sort: el.sort.value, lang: el.lang.value };
+    return { q: el.q.value, city: el.city.value, category: el.category.value,
+             minRating: el.minRating.value, sort: el.sort.value, lang: el.lang.value };
   }
 
   /* ------------------------------------------------------------------ */
@@ -741,6 +760,7 @@
     document.querySelectorAll("[data-i18n-title]").forEach((node) => {
       node.title = t(node.dataset.i18nTitle);
     });
+    buildCityOptions();
     buildCategoryOptions();
     applyFilters();
   }
@@ -770,6 +790,7 @@
     state.rows = rows;
     state.fileName = fileName || "данные";
     el.toolbar.classList.add("on");
+    buildCityOptions();
     buildCategoryOptions();
 
     const sources = new Set(rows.map((r) => [r.query, r.city].filter(Boolean).join(" · ")).filter(Boolean));
@@ -788,6 +809,25 @@
   /* ------------------------------------------------------------------ */
   /* Фильтры, сортировка, отрисовка                                      */
   /* ------------------------------------------------------------------ */
+  function buildCityOptions() {
+    const cities = [...new Set(state.rows.map((row) => row.city).filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b, LANG));
+    const previous = el.city.value;
+    el.city.textContent = "";
+    const all = document.createElement("option");
+    all.value = ""; all.textContent = t("allCities");
+    el.city.append(all);
+    for (const value of cities) {
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = localizePlace(value);
+      el.city.append(option);
+    }
+    if ([...el.city.options].some((option) => option.value === previous)) {
+      el.city.value = previous;
+    }
+  }
+
   function buildCategoryOptions() {
     const categories = [...new Set(state.rows.map((r) => r.category).filter(Boolean))]
       .sort((a, b) => categoryLabel(a).localeCompare(categoryLabel(b), LANG));
@@ -809,10 +849,12 @@
   function applyFilters() {
     const needle = el.q.value.trim().toLowerCase();
     const category = el.category.value;
+    const city = el.city.value;
     const minRating = parseFloat(el.minRating.value) || 0;
     const lang = el.lang.value;
 
     state.filtered = state.rows.filter((row) => {
+      if (city && row.city !== city) return false;
       if (category && row.category !== category) return false;
       if (minRating && (row.rating === null || row.rating < minRating)) return false;
       if (lang === "es" && !row.spanish) return false;
@@ -899,7 +941,17 @@
     if (row.address) {
       const address = document.createElement("div");
       address.className = "addr";
-      address.textContent = "📍 " + localizeAddress(row.address);
+      // Город добавляем к адресу, если в самом адресе его нет
+      const shownCity = row.city ? localizePlace(row.city) : "";
+      const addressHasCity = shownCity &&
+        localizeAddress(row.address).toLowerCase().includes(shownCity.toLowerCase());
+      address.textContent = "📍 " + localizeAddress(row.address) +
+        (shownCity && !addressHasCity ? ", " + shownCity : "");
+      article.append(address);
+    } else if (row.city) {
+      const address = document.createElement("div");
+      address.className = "addr";
+      address.textContent = "📍 " + localizePlace(row.city);
       article.append(address);
     }
 
@@ -975,6 +1027,7 @@
   let filtersSaveTimer = null;
   ["input", "change"].forEach((evt) => {
     el.q.addEventListener(evt, applyFilters);
+    el.city.addEventListener(evt, applyFilters);
     el.category.addEventListener(evt, applyFilters);
     el.minRating.addEventListener(evt, applyFilters);
     el.sort.addEventListener(evt, applyFilters);
@@ -982,7 +1035,7 @@
   });
   // Настройки вида сохраняем отдельно от данных и не на каждое нажатие клавиши.
   ["input", "change"].forEach((evt) => {
-    [el.q, el.category, el.minRating, el.sort, el.lang].forEach((control) =>
+    [el.q, el.city, el.category, el.minRating, el.sort, el.lang].forEach((control) =>
       control.addEventListener(evt, () => {
         clearTimeout(filtersSaveTimer);
         filtersSaveTimer = setTimeout(() => store.saveFilters(currentFilters()), 400);
@@ -1013,6 +1066,7 @@
     if (typeof saved.minRating === "string") el.minRating.value = saved.minRating;
     if (typeof saved.sort === "string") el.sort.value = saved.sort;
     if (typeof saved.lang === "string") el.lang.value = saved.lang;
+    if (typeof saved.city === "string") el.city.value = saved.city;
     if (typeof saved.category === "string" &&
         [...el.category.options].some((option) => option.value === saved.category)) {
       el.category.value = saved.category;
