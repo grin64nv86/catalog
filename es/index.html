@@ -185,30 +185,12 @@
 <header>
   <div class="wrap">
     <h1 data-i18n="title">Каталог организаций</h1>
-    <div class="sub" id="subtitle"><span data-i18n="subtitle">Данные из JSON-файла, полученного скриптом</span> <b>maps_scraper.py</b><span id="langs" class="langs" role="group" aria-label="Language"><button type="button" data-lang="ru">RU</button><button type="button" data-lang="en">EN</button><button type="button" data-lang="es">ES</button></span></div>
+    <div class="sub" id="subtitle"><span data-i18n="subtitle">Рейтинги, адреса, телефоны и часы работы организаций</span><span id="langs" class="langs" role="group" aria-label="Language"><button type="button" data-lang="ru">RU</button><button type="button" data-lang="en">EN</button><button type="button" data-lang="es">ES</button></span></div>
   </div>
 </header>
 
 <main>
-  <!-- Шаг 1: загрузка JSON -->
-  <section id="dropzone" tabindex="0" role="button" aria-label="Загрузить JSON-файл">
-    <div class="big"><span data-i18n="dropBig">Перетащите сюда</span> <code>salons.json</code></div>
-    <div class="hint"><span data-i18n="dropHint">или нажмите, чтобы выбрать файл. Поддерживается массив объектов или объект с полем</span> <code>results</code>. <span data-i18n="dropHint2">Данные сохраняются в браузере, поэтому после обновления страницы каталог откроется сам.</span></div>
-    <div class="btnrow">
-      <button class="primary" id="pickBtn" type="button" data-i18n="pickFile">Выбрать файл</button>
-      <button id="demoBtn" type="button" data-i18n="loadServer">Загрузить salons.json с сервера</button>
-    </div>
-    <input type="file" id="fileInput" accept=".json,application/json" hidden>
-  </section>
   <div id="error"></div>
-
-  <!-- Плашка о восстановленных данных -->
-  <div id="notice">
-    <span id="noticeText"></span>
-    <span class="spacer"></span>
-    <button id="noticePick" type="button" data-i18n="updateFile">Обновить файл</button>
-    <button id="noticeClear" type="button" data-i18n="clear">Очистить</button>
-  </div>
 
   <!-- Панель управления -->
   <div id="toolbar">
@@ -241,34 +223,22 @@
         <option value="address" data-i18n="sortAddress">адрес A→Z</option>
       </select>
     </label>
-    <button id="csvBtn" type="button" data-i18n="exportCsv">Экспорт CSV</button>
-    <button id="resetBtn" type="button" data-i18n="anotherFile">Другой файл</button>
-    <span id="filename"></span>
-  </div>
 
-  <!-- Сводка -->
-  <section id="stats">
-    <div class="stat"><div class="k" data-i18n="statFound">Найдено</div><div class="v" id="stTotal">0</div></div>
-    <div class="stat"><div class="k" data-i18n="statAvg">Средний рейтинг</div><div class="v" id="stAvg">—</div></div>
-    <div class="stat"><div class="k" data-i18n="statReviews">Отзывов всего</div><div class="v" id="stReviews">0</div></div>
-    <div class="stat"><div class="k" data-i18n="statPhone">С телефоном</div><div class="v" id="stPhone">0</div></div>
-    <div class="stat" title="Признаки: отзывы на испанском, атрибут Latino-owned, испанская версия сайта">
-      <div class="k" data-i18n="statSpanish">По-испански</div><div class="v" id="stSpanish">0</div></div>
-  </section>
+  </div>
 
   <div id="grid"></div>
   <div id="empty">
-    <div data-i18n="emptyText">Ничего не найдено — измените условия поиска или фильтры.</div>
+    <div data-i18n="emptyText">Ничего не найдено — попробуйте изменить условия поиска.</div>
     <div class="btnrow"><button id="emptyReset" type="button" data-i18n="resetFilters">Сбросить фильтры</button></div>
   </div>
 </main>
 
 <footer>
-  <span data-i18n="footer">Статическая страница, работает без интернета и без сервера: данные читаются прямо в браузере.</span>
+  <span data-i18n="footer">Каталог организаций с рейтингами, адресами, телефонами и часами работы.</span>
 </footer>
 
 <!-- Данные, созданные export_json.py: локальный <script src> работает и по file://, в отличие от fetch -->
-<script src="../salons.data.js?v=2026-10-14T17:25:45+00:00" onerror="window.__CATALOG_DATA_MISSING__ = true"></script>
+<script src="../salons.data.js?v=2026-10-14T18:22:15+00:00" onerror="window.__CATALOG_DATA_MISSING__ = true"></script>
 <script>
 (() => {
   "use strict";
@@ -281,15 +251,11 @@
     ru: {
       docTitle: "Каталог организаций — Google Maps",
       title: "Каталог организаций",
-      subtitle: "Данные из JSON-файла, полученного скриптом",
+      subtitle: "Рейтинги, адреса, телефоны и часы работы организаций",
       source: "Источник",
       dropBig: "Перетащите сюда",
       dropHint: "или нажмите, чтобы выбрать файл. Поддерживается массив объектов или объект с полем",
       dropHint2: "Данные сохраняются в браузере, поэтому после обновления страницы каталог откроется сам.",
-      pickFile: "Выбрать файл",
-      loadServer: "Загрузить salons.json с сервера",
-      updateFile: "Обновить файл",
-      clear: "Очистить",
       searchPlaceholder: "Поиск по названию, категории, адресу, сайту…",
       filterCategory: "Категория",
       filterRating: "Рейтинг от",
@@ -301,20 +267,14 @@
       spanishStrong: "подтверждено (атрибут или отзывы)",
       spanishNo: "без испанского",
       sortRating: "рейтинг ↓", sortReviews: "отзывы ↓",
-      sortName: "название A→Z", sortAddress: "адрес A→Z",
-      exportCsv: "Экспорт CSV",
-      anotherFile: "Другой файл",
-      statFound: "Найдено", statAvg: "Средний рейтинг", statReviews: "Отзывов всего",
-      statPhone: "С телефоном", statSpanish: "По-испански",
-      emptyText: "Ничего не найдено — измените условия поиска или фильтры.",
+      sortName: "название A→Z", sortAddress: "адрес A→Z", statAvg: "Средний рейтинг", statReviews: "Отзывов всего", statSpanish: "По-испански",
+      emptyText: "Ничего не найдено — попробуйте изменить условия поиска.",
       resetFilters: "Сбросить фильтры",
-      footer: "Статическая страница, работает без интернета и без сервера: данные читаются прямо в браузере.",
+      footer: "Каталог организаций с рейтингами, адресами, телефонами и часами работы.",
       schedule: "Расписание",
       spanishYes: "🇪🇸 говорят по-испански",
       spanishMaybe: "🇪🇸 возможно, по-испански",
-      noName: "(без названия)",
-      restored: "Каталог восстановлен", loadedAuto: "Каталог загружен автоматически",
-      savedAgo: "сохранено", exportedAgo: "выгружено", inLocalStorage: "в localStorage",
+      noName: "(без названия)", loadedAuto: "Каталог загружен автоматически", exportedAgo: "выгружено", inLocalStorage: "в localStorage",
       justNow: "только что", minAgo: "мин назад", hourAgo: "ч назад",
       records: ["запись", "записи", "записей"],
       reviewsWord: ["отзыв", "отзыва", "отзывов"],
@@ -324,6 +284,9 @@
       errFetchHint: "Откройте страницу через локальный сервер (python -m http.server) или выберите файл вручную.",
       errSave: "Браузер не смог сохранить данные",
       errSaveHint: "после обновления страницы файл придётся загрузить заново.",
+      errNoData: "Данные каталога пока не загружены. Обновите страницу позже.",
+      errNoData: "The catalog data is not loaded yet. Please try again later.",
+      errNoData: "Los datos del catálogo aún no están cargados. Vuelva a intentarlo más tarde.",
       csvHead: ["Название", "Рейтинг", "Отзывов", "Категория", "Адрес", "Телефон", "Сайт",
                 "Часы работы", "Сейчас", "По-испански", "Признак языка", "Google Maps", "Город", "Запрос"],
       langName: "Русский",
@@ -331,15 +294,11 @@
     en: {
       docTitle: "Business catalog — Google Maps",
       title: "Business catalog",
-      subtitle: "Data from a JSON file produced by",
+      subtitle: "Ratings, addresses, phone numbers and opening hours of local businesses",
       source: "Source",
       dropBig: "Drop",
       dropHint: "here or click to choose a file. An array of objects or an object with a",
       dropHint2: "The data is kept in your browser, so the catalog opens by itself after a reload.",
-      pickFile: "Choose file",
-      loadServer: "Load salons.json from server",
-      updateFile: "Reload file",
-      clear: "Clear",
       searchPlaceholder: "Search by name, category, address, website…",
       filterCategory: "Category",
       filterRating: "Rating from",
@@ -351,20 +310,14 @@
       spanishStrong: "confirmed (attribute or reviews)",
       spanishNo: "no Spanish",
       sortRating: "rating ↓", sortReviews: "reviews ↓",
-      sortName: "name A→Z", sortAddress: "address A→Z",
-      exportCsv: "Export CSV",
-      anotherFile: "Another file",
-      statFound: "Found", statAvg: "Average rating", statReviews: "Reviews total",
-      statPhone: "With phone", statSpanish: "Spanish",
-      emptyText: "Nothing found — adjust the search or filters.",
+      sortName: "name A→Z", sortAddress: "address A→Z", statAvg: "Average rating", statReviews: "Reviews total", statSpanish: "Spanish",
+      emptyText: "Nothing found — try adjusting your search.",
       resetFilters: "Reset filters",
-      footer: "A static page: it works without internet or a server, reading the data in your browser.",
+      footer: "A directory of local businesses with ratings, addresses, phone numbers and opening hours.",
       schedule: "Opening hours",
       spanishYes: "🇪🇸 speaks Spanish",
       spanishMaybe: "🇪🇸 possibly Spanish",
-      noName: "(no name)",
-      restored: "Catalog restored", loadedAuto: "Catalog loaded automatically",
-      savedAgo: "saved", exportedAgo: "exported", inLocalStorage: "in localStorage",
+      noName: "(no name)", loadedAuto: "Catalog loaded automatically", exportedAgo: "exported", inLocalStorage: "in localStorage",
       justNow: "just now", minAgo: "min ago", hourAgo: "h ago",
       records: ["record", "records"],
       reviewsWord: ["review", "reviews"],
@@ -381,15 +334,11 @@
     es: {
       docTitle: "Catálogo de negocios — Google Maps",
       title: "Catálogo de negocios",
-      subtitle: "Datos de un archivo JSON generado por",
+      subtitle: "Valoraciones, direcciones, teléfonos y horarios de los negocios",
       source: "Fuente",
       dropBig: "Arrastra aquí",
       dropHint: "o haz clic para elegir un archivo. Se admite un array de objetos o un objeto con",
       dropHint2: "Los datos se guardan en el navegador, así que el catálogo se abre solo al recargar.",
-      pickFile: "Elegir archivo",
-      loadServer: "Cargar salons.json del servidor",
-      updateFile: "Actualizar archivo",
-      clear: "Borrar",
       searchPlaceholder: "Buscar por nombre, categoría, dirección, web…",
       filterCategory: "Categoría",
       filterRating: "Valoración desde",
@@ -401,20 +350,14 @@
       spanishStrong: "confirmado (atributo o reseñas)",
       spanishNo: "sin español",
       sortRating: "valoración ↓", sortReviews: "reseñas ↓",
-      sortName: "nombre A→Z", sortAddress: "dirección A→Z",
-      exportCsv: "Exportar CSV",
-      anotherFile: "Otro archivo",
-      statFound: "Encontrados", statAvg: "Valoración media", statReviews: "Reseñas en total",
-      statPhone: "Con teléfono", statSpanish: "En español",
-      emptyText: "No se encontró nada: cambia la búsqueda o los filtros.",
+      sortName: "nombre A→Z", sortAddress: "dirección A→Z", statAvg: "Valoración media", statReviews: "Reseñas en total", statSpanish: "En español",
+      emptyText: "No se encontró nada: prueba a cambiar la búsqueda.",
       resetFilters: "Restablecer filtros",
-      footer: "Página estática: funciona sin internet ni servidor, los datos se leen en el navegador.",
+      footer: "Directorio de negocios con valoraciones, direcciones, teléfonos y horarios.",
       schedule: "Horario",
       spanishYes: "🇪🇸 hablan español",
       spanishMaybe: "🇪🇸 posiblemente español",
-      noName: "(sin nombre)",
-      restored: "Catálogo restaurado", loadedAuto: "Catálogo cargado automáticamente",
-      savedAgo: "guardado", exportedAgo: "exportado", inLocalStorage: "en localStorage",
+      noName: "(sin nombre)", loadedAuto: "Catálogo cargado automáticamente", exportedAgo: "exportado", inLocalStorage: "en localStorage",
       justNow: "ahora mismo", minAgo: "min atrás", hourAgo: "h atrás",
       records: ["registro", "registros"],
       reviewsWord: ["reseña", "reseñas"],
@@ -430,61 +373,43 @@
     },
   };
 
-  // Перевод категорий: ключи — как их отдают источники (Google по-русски,
-  // Overture по-английски), значения — подписи для трёх языков.
+  /* Категории: в базе хранятся коды, здесь — подписи для трёх языков.
+     Файл синхронизирован с db.py (CATEGORY_LABELS). */
   const CATEGORY_I18N = {
-    "парикмахерская": { ru: "Парикмахерская", en: "Hair salon", es: "Peluquería" },
-    "мужская парикмахерская": { ru: "Мужская парикмахерская", en: "Barbershop", es: "Barbería" },
-    "салон красоты": { ru: "Салон красоты", en: "Beauty salon", es: "Salón de belleza" },
-    "hair salon": { ru: "Парикмахерская", en: "Hair salon", es: "Peluquería" },
+    "auto_body": { ru: "Кузовной ремонт", en: "Auto body shop", es: "Taller de chapa" },
+    "auto_detailing": { ru: "Детейлинг", en: "Auto detailing", es: "Detallado de autos" },
+    "auto_glass": { ru: "Автостёкла", en: "Auto glass", es: "Cristales de autos" },
+    "auto_repair": { ru: "Автосервис", en: "Auto repair", es: "Taller mecánico" },
     "barber": { ru: "Барбершоп", en: "Barbershop", es: "Barbería" },
-    "hair stylist": { ru: "Парикмахер", en: "Hair stylist", es: "Peluquero" },
-    "hair extensions": { ru: "Наращивание волос", en: "Hair extensions", es: "Extensiones de cabello" },
-    "beauty salon": { ru: "Салон красоты", en: "Beauty salon", es: "Salón de belleza" },
-    "nail salon": { ru: "Маникюрный салон", en: "Nail salon", es: "Salón de uñas" },
-    "spa": { ru: "Спа", en: "Spa", es: "Spa" },
-    "day spa": { ru: "Дневной спа", en: "Day spa", es: "Spa de día" },
-    "tanning salon": { ru: "Солярий", en: "Tanning salon", es: "Solárium" },
-    "стоматология": { ru: "Стоматология", en: "Dentist", es: "Dentista" },
-    "стоматологическая клиника": { ru: "Стоматология", en: "Dental clinic", es: "Clínica dental" },
-    "dental clinic": { ru: "Стоматология", en: "Dental clinic", es: "Clínica dental" },
-    "general dentistry": { ru: "Стоматология", en: "General dentistry", es: "Odontología general" },
-    "pediatric dentistry": { ru: "Детская стоматология", en: "Pediatric dentistry", es: "Odontología infantil" },
-    "cosmetic dentistry": { ru: "Эстетическая стоматология", en: "Cosmetic dentistry", es: "Odontología estética" },
-    "кофейня": { ru: "Кофейня", en: "Coffee shop", es: "Cafetería" },
-    "coffee shop": { ru: "Кофейня", en: "Coffee shop", es: "Cafetería" },
-    "cafe": { ru: "Кафе", en: "Cafe", es: "Café" },
-    "кофейня-кондитерская": { ru: "Кофейня-кондитерская", en: "Coffee & pastry shop", es: "Cafetería y pastelería" },
-    "ветеринарная клиника": { ru: "Ветеринарная клиника", en: "Veterinary clinic", es: "Clínica veterinaria" },
-    "ветеринар": { ru: "Ветеринар", en: "Veterinarian", es: "Veterinario" },
-    "veterinarian": { ru: "Ветеринарная клиника", en: "Veterinarian", es: "Veterinario" },
-    "animal or pet service": { ru: "Услуги для животных", en: "Pet services", es: "Servicios para mascotas" },
-    "ремонт и обслуживание автомобилей": { ru: "Ремонт и обслуживание автомобилей", en: "Auto repair", es: "Taller mecánico" },
-    "automotive repair": { ru: "Автосервис", en: "Auto repair", es: "Taller mecánico" },
-    "automotive service": { ru: "Автосервис", en: "Automotive service", es: "Servicio automotriz" },
-    "auto body shop": { ru: "Кузовной ремонт", en: "Auto body shop", es: "Taller de chapa y pintura" },
-    "auto detailing": { ru: "Детейлинг", en: "Auto detailing", es: "Detallado de autos" },
-    "auto glass service": { ru: "Автостёкла", en: "Auto glass service", es: "Cristales de autos" },
+    "beauty_salon": { ru: "Салон красоты", en: "Beauty salon", es: "Salón de belleza" },
+    "cleaning": { ru: "Уборка", en: "Cleaning services", es: "Limpieza" },
+    "coffee_shop": { ru: "Кофейня", en: "Coffee shop", es: "Cafetería" },
+    "concrete": { ru: "Бетонные работы", en: "Concrete work", es: "Trabajos de hormigón" },
+    "cosmetic_dentist": { ru: "Эстетическая стоматология", en: "Cosmetic dentist", es: "Dentista estético" },
+    "coworking": { ru: "Коворкинг", en: "Coworking space", es: "Espacio de coworking" },
+    "dentist": { ru: "Стоматология", en: "Dentist", es: "Dentista" },
+    "driver_services": { ru: "Услуги водителя", en: "Driver services", es: "Servicios de conductor" },
+    "electrician": { ru: "Электрик", en: "Electrician", es: "Electricista" },
+    "facial_spa": { ru: "Уход за лицом", en: "Facial spa", es: "Centro facial" },
+    "fence_staining": { ru: "Покраска заборов", en: "Fence staining", es: "Teñido de cercas" },
     "gym": { ru: "Фитнес-клуб", en: "Gym", es: "Gimnasio" },
-    "фитнес-клуб": { ru: "Фитнес-клуб", en: "Gym", es: "Gimnasio" },
-    "fitness trainer": { ru: "Тренер", en: "Fitness trainer", es: "Entrenador personal" },
-    "sport or fitness facility": { ru: "Спортивный объект", en: "Sports facility", es: "Instalación deportiva" },
-    "coworking space": { ru: "Коворкинг", en: "Coworking space", es: "Espacio de coworking" },
-    "услуги водителя": { ru: "Услуги водителя", en: "Driver services", es: "Servicios de conductor" },
-    "клиника по снятию болевого синдрома": { ru: "Клиника боли", en: "Pain clinic", es: "Clínica del dolor" },
-    "медицинская клиника": { ru: "Медицинская клиника", en: "Medical clinic", es: "Clínica médica" },
-    "стоматолог": { ru: "Стоматолог", en: "Dentist", es: "Dentista" },
-    "сантехник": { ru: "Сантехник", en: "Plumber", es: "Fontanero" },
-    "ремонт кондиционеров": { ru: "Ремонт кондиционеров", en: "Air conditioning repair", es: "Reparación de aire acondicionado" },
-    "подрядчик по вентиляции, отоплению и кондиционированию": {
-      ru: "Отопление и вентиляция", en: "HVAC contractor", es: "Contratista de climatización" },
-    "подрядчик по бетонным работам": { ru: "Бетонные работы", en: "Concrete contractor", es: "Contratista de hormigón" },
-    "центр по уходу за лицом": { ru: "Уход за лицом", en: "Facial spa", es: "Centro facial" },
-    "отзывов нет": { ru: "Отзывов нет", en: "No reviews yet", es: "Sin reseñas" },
-    "ветеринар": { ru: "Ветеринар", en: "Veterinarian", es: "Veterinario" },
+    "hair_salon": { ru: "Парикмахерская", en: "Hair salon", es: "Peluquería" },
+    "handyman": { ru: "Мастер на час", en: "Handyman", es: "Maestro de reparaciones" },
+    "home_care": { ru: "Уход на дому", en: "Home care", es: "Cuidado a domicilio" },
+    "hvac": { ru: "Кондиционеры и отопление", en: "AC & heating", es: "Aire y calefacción" },
+    "landscaping": { ru: "Ландшафт и двор", en: "Landscaping", es: "Jardinería" },
+    "medical_clinic": { ru: "Медицинская клиника", en: "Medical clinic", es: "Clínica médica" },
+    "nail_salon": { ru: "Маникюрный салон", en: "Nail salon", es: "Salón de uñas" },
+    "nursing": { ru: "Сестринские услуги", en: "Nursing services", es: "Servicios de enfermería" },
+    "pain_clinic": { ru: "Клиника боли", en: "Pain clinic", es: "Clínica del dolor" },
+    "pediatric_dentist": { ru: "Детская стоматология", en: "Pediatric dentist", es: "Dentista infantil" },
+    "plumber": { ru: "Сантехник", en: "Plumber", es: "Fontanero" },
+    "spa": { ru: "Спа", en: "Spa", es: "Spa" },
+    "tanning_salon": { ru: "Солярий", en: "Tanning salon", es: "Solárium" },
+    "veterinarian": { ru: "Ветеринарная клиника", en: "Veterinarian", es: "Veterinario" },
   };
 
-  /* Дни недели: принимаем и русские, и английские названия, отдаём на нужном языке */
+  /* Дни недели: принимаем русские и английские названия, отдаём на нужном языке */
   const WEEKDAYS = {
     "понедельник": { ru: "понедельник", en: "Monday", es: "lunes" },
     "вторник": { ru: "вторник", en: "Tuesday", es: "martes" },
@@ -525,7 +450,19 @@
     "opens soon": { ru: "Скоро откроется", en: "Opening soon", es: "Abre pronto" },
   };
 
-  /* Страны, регионы и города, которые Google отдаёт по-русски */
+  /* Фразы со временем: «Закроется в 18:00», «Closes at 6 PM» */
+  const HOURS_PATTERNS = [
+    [/Закроется в\s*([\d:]+)/gi, "Закроется в $1", "Closes at $1", "Cierra a las $1"],
+    [/Откроется в\s*([\d:]+)/gi, "Откроется в $1", "Opens at $1", "Abre a las $1"],
+    [/Закрывается в\s*([\d:]+)/gi, "Закрывается в $1", "Closes at $1", "Cierra a las $1"],
+    [/Открывается в\s*([\d:]+)/gi, "Открывается в $1", "Opens at $1", "Abre a las $1"],
+    [/Closes at\s*([\d:]+|\d{1,2}\s*(?:am|pm))/gi, "Закроется в $1", "Closes at $1", "Cierra a las $1"],
+    [/Opens at\s*([\d:]+|\d{1,2}\s*(?:am|pm))/gi, "Откроется в $1", "Opens at $1", "Abre a las $1"],
+    [/Closes\s+(\d{1,2}\s*(?:am|pm))/gi, "Закроется в $1", "Closes at $1", "Cierra a las $1"],
+    [/Opens\s+(\d{1,2}\s*(?:am|pm))/gi, "Откроется в $1", "Opens at $1", "Abre a las $1"],
+  ];
+
+  /* Страны, регионы и города, которые источники отдают по-русски */
   const PLACES_I18N = {
     "соединенные штаты": { ru: "Соединенные Штаты", en: "United States", es: "Estados Unidos" },
     "соединённые штаты": { ru: "Соединенные Штаты", en: "United States", es: "Estados Unidos" },
@@ -545,36 +482,20 @@
     "denver": { ru: "Денвер", en: "Denver", es: "Denver" },
   };
 
-  /* Фразы со временем: «Закроется в 18:00», «Откроется в 09:00», «Closes at 6 PM» */
-  const HOURS_PATTERNS = [
-    [/Закроется в\s*([\d:]+)/gi, "Закроется в $1", "Closes at $1", "Cierra a las $1"],
-    [/Откроется в\s*([\d:]+)/gi, "Откроется в $1", "Opens at $1", "Abre a las $1"],
-    [/Закрывается в\s*([\d:]+)/gi, "Закрывается в $1", "Closes at $1", "Cierra a las $1"],
-    [/Открывается в\s*([\d:]+)/gi, "Открывается в $1", "Opens at $1", "Abre a las $1"],
-    [/Closes at\s*([\d:]+|\d{1,2}\s*(?:am|pm))/gi, "Закроется в $1", "Closes at $1", "Cierra a las $1"],
-    [/Opens at\s*([\d:]+|\d{1,2}\s*(?:am|pm))/gi, "Откроется в $1", "Opens at $1", "Abre a las $1"],
-    [/Closes\s+(\d{1,2}\s*(?:am|pm))/gi, "Закроется в $1", "Closes at $1", "Cierra a las $1"],
-    [/Opens\s+(\d{1,2}\s*(?:am|pm))/gi, "Откроется в $1", "Opens at $1", "Abre a las $1"],
-  ];
-
-  /* Часы работы: «Открыто · Закроется в 18:00», «вторник: 09:00–20:00; …» */
+  /* Часы работы и статус на нужном языке */
   function localizeHoursText(text) {
     if (!text) return text;
     let out = String(text);
-    // фразы со временем
     for (const [pattern, ru, en, es] of HOURS_PATTERNS) {
       out = out.replace(pattern, LANG === "ru" ? ru : (LANG === "es" ? es : en));
     }
-    // дни недели
     for (const [key, forms] of Object.entries(WEEKDAYS)) {
       out = out.replace(new RegExp("(^|\\s|;)" + key + "(?=:|\\s)", "gi"),
         (match, before) => before + (forms[LANG] || forms.en));
     }
-    // короткие дни в скобках: «(ср)» → «(Wed)»
     for (const [key, forms] of Object.entries(SHORT_DAYS)) {
       out = out.replace(new RegExp("\\(" + key + "\\)", "gi"), "(" + (forms[LANG] || forms.en) + ")");
     }
-    // фразы: «24 часа в сутки», «Закрыто», «Открыто»
     for (const [key, forms] of Object.entries(HOURS_PHRASES)) {
       out = out.replace(new RegExp(key, "gi"), forms[LANG] || forms.en);
     }
@@ -609,7 +530,6 @@
     if (!text) return "";
     return localizeHoursText(String(text)).replace(STATUS_NOISE, "").replace(/\s*·\s*$/, "").trim();
   }
-
 
   const SUPPORTED = ["ru", "en", "es"];
 
@@ -664,119 +584,19 @@
 
   const $ = (id) => document.getElementById(id);
   const el = {
-    dropzone: $("dropzone"), pickBtn: $("pickBtn"), demoBtn: $("demoBtn"), fileInput: $("fileInput"),
-    toolbar: $("toolbar"), stats: $("stats"), grid: $("grid"), empty: $("empty"), error: $("error"),
+    toolbar: $("toolbar"), grid: $("grid"), empty: $("empty"), error: $("error"),
     q: $("q"), category: $("category"), minRating: $("minRating"), sort: $("sort"), lang: $("lang"),
     langs: $("langs"),
-    csvBtn: $("csvBtn"), resetBtn: $("resetBtn"), filename: $("filename"),
-    subtitle: $("subtitle"), stTotal: $("stTotal"), stAvg: $("stAvg"),
-    stReviews: $("stReviews"), stPhone: $("stPhone"), stSpanish: $("stSpanish"),
-    notice: $("notice"), noticeText: $("noticeText"), noticePick: $("noticePick"), noticeClear: $("noticeClear"),
+    subtitle: $("subtitle"),
     emptyReset: $("emptyReset"),
   };
 
-  /* ------------------------------------------------------------------ */
-  /* Хранилище: данные переживают перезагрузку страницы                  */
-  /* ------------------------------------------------------------------ */
-  const DB_NAME = "maps-catalog";
-  const DB_STORE = "state";
-  const DB_RECORD = "last";
-  const LS_ROWS = "maps-catalog/rows";     // запасной вариант, если IndexedDB недоступен
-  const LS_FILTERS = "maps-catalog/filters"; // мелкие настройки вида — отдельно
-
-  function idbRequest(request) {
-    return new Promise((resolve, reject) => {
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error || new Error("IndexedDB request failed"));
-    });
-  }
-
-  function idbOpen() {
-    return new Promise((resolve, reject) => {
-      if (!("indexedDB" in window)) { reject(new Error("IndexedDB недоступен")); return; }
-      const request = indexedDB.open(DB_NAME, 1);
-      request.onupgradeneeded = () => {
-        const db = request.result;
-        if (!db.objectStoreNames.contains(DB_STORE)) db.createObjectStore(DB_STORE, { keyPath: "id" });
-      };
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error || new Error("IndexedDB не открылся"));
-      request.onblocked = () => reject(new Error("IndexedDB заблокирован"));
-    });
-  }
-
+  /* Настройки вида (язык и фильтры) — в localStorage */
+  const LS_FILTERS = "maps-catalog/filters";
   const store = {
-    mode: "",           // "idb" | "localStorage" | "off"
-    warning: "",
-
-    async saveRows(payload) {
-      try {
-        const db = await idbOpen();
-        try {
-          const tx = db.transaction(DB_STORE, "readwrite");
-          tx.objectStore(DB_STORE).put({ id: DB_RECORD, ...payload });
-          await new Promise((resolve, reject) => {
-            tx.oncomplete = resolve;
-            tx.onerror = () => reject(tx.error);
-            tx.onabort = () => reject(tx.error);
-          });
-        } finally { db.close(); }
-        this.mode = "idb";
-        this.warning = "";
-        return true;
-      } catch (idbError) {
-        try {
-          localStorage.setItem(LS_ROWS, JSON.stringify(payload));
-          this.mode = "localStorage";
-          this.warning = "";
-          return true;
-        } catch (lsError) {
-          this.mode = "off";
-          this.warning = t("errSave") + " (" + (lsError.name || lsError.message) + ") — " +
-            t("errSaveHint");
-          return false;
-        }
-      }
-    },
-
-    async loadRows() {
-      try {
-        const db = await idbOpen();
-        try {
-          const record = await idbRequest(db.transaction(DB_STORE, "readonly").objectStore(DB_STORE).get(DB_RECORD));
-          if (record && Array.isArray(record.rows) && record.rows.length) { this.mode = "idb"; return record; }
-        } finally { db.close(); }
-      } catch (err) { /* переходим к localStorage */ }
-
-      try {
-        const raw = localStorage.getItem(LS_ROWS);
-        if (raw) {
-          const record = JSON.parse(raw);
-          if (record && Array.isArray(record.rows) && record.rows.length) { this.mode = "localStorage"; return record; }
-        }
-      } catch (err) { /* нет сохранённых данных */ }
-      return null;
-    },
-
-    async clear() {
-      try {
-        const db = await idbOpen();
-        try {
-          const tx = db.transaction(DB_STORE, "readwrite");
-          tx.objectStore(DB_STORE).delete(DB_RECORD);
-          await new Promise((resolve, reject) => {
-            tx.oncomplete = resolve;
-            tx.onerror = () => reject(tx.error);
-          });
-        } finally { db.close(); }
-      } catch (err) { /* нечего чистить */ }
-      try { localStorage.removeItem(LS_ROWS); } catch (err) { /* ignore */ }
-    },
-
     saveFilters(filters) {
-      try { localStorage.setItem(LS_FILTERS, JSON.stringify(filters)); } catch (err) { /* ignore */ }
+      try { localStorage.setItem(LS_FILTERS, JSON.stringify(filters)); } catch (err) { /* приватный режим */ }
     },
-
     loadFilters() {
       try {
         const raw = localStorage.getItem(LS_FILTERS);
@@ -945,140 +765,25 @@
     button.addEventListener("click", () => switchLanguage(button.dataset.lang));
   });
 
-  function showNotice(message) {
-    el.noticeText.textContent = message;
-    el.notice.classList.toggle("on", Boolean(message));
-  }
-
   /* Отрисовка уже готового набора записей (после загрузки файла или восстановления). */
   function applyData(rows, fileName) {
     state.rows = rows;
     state.fileName = fileName || "данные";
-    el.filename.textContent = state.fileName;
-    el.dropzone.style.display = "none";
     el.toolbar.classList.add("on");
-    el.stats.classList.add("on");
     buildCategoryOptions();
 
     const sources = new Set(rows.map((r) => [r.query, r.city].filter(Boolean).join(" · ")).filter(Boolean));
     el.subtitle.textContent = "";
-    el.subtitle.append(document.createTextNode(t("source") + ": "));
-    const b = document.createElement("b");
-    b.textContent = state.fileName;
-    el.subtitle.append(b,
-      document.createTextNode(sources.size ? " · " + [...sources].join("; ") : ""), el.langs);
+    el.subtitle.append(document.createTextNode(t("subtitle")), el.langs);
   }
 
-  function loadText(text, fileName) {
-    let parsed;
-    try {
-      parsed = JSON.parse(text);
-    } catch (err) {
-      showError(t("errJson") + ": " + err.message);
-      return;
-    }
-    let rows;
-    try {
-      rows = extractRows(parsed);
-    } catch (err) {
-      showError(err.message);
-      return;
-    }
-    if (!rows.length) { showError(t("errNoRows")); return; }
-
+  function applyRows(rows, sourceName) {
+    if (!rows.length) { showError(t("errNoRows")); return false; }
     clearError();
-    showNotice("");
-    applyData(rows, fileName);
-
-    // Сбрасываем фильтры прошлого файла и сохраняем новый набор в браузере.
-    el.q.value = ""; el.minRating.value = "0"; el.sort.value = "rating";
-    el.category.value = ""; el.lang.value = "";
-    store.saveFilters(currentFilters());
+    applyData(rows, sourceName);
     applyFilters();
-    persistRows();
-
-    // Данные слишком большие для хранилища — предупреждаем честно.
-    if (store.warning) showNotice(store.warning);
+    return true;
   }
-
-  async function persistRows() {
-    if (!state.rows.length) return false;
-    return store.saveRows({ fileName: state.fileName, savedAt: Date.now(), rows: state.rows });
-  }
-
-  function loadFile(file) {
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => loadText(String(reader.result), file.name);
-    reader.onerror = () => showError("Не удалось прочитать файл " + file.name);
-    reader.readAsText(file, "utf-8");
-  }
-
-  el.pickBtn.addEventListener("click", (e) => { e.stopPropagation(); el.fileInput.click(); });
-  el.dropzone.addEventListener("click", () => el.fileInput.click());
-  el.dropzone.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); el.fileInput.click(); }
-  });
-  el.fileInput.addEventListener("change", () => loadFile(el.fileInput.files[0]));
-
-  ["dragenter", "dragover"].forEach((evt) =>
-    el.dropzone.addEventListener(evt, (e) => { e.preventDefault(); el.dropzone.classList.add("drag"); }));
-  ["dragleave", "drop"].forEach((evt) =>
-    el.dropzone.addEventListener(evt, (e) => { e.preventDefault(); el.dropzone.classList.remove("drag"); }));
-  el.dropzone.addEventListener("drop", (e) => {
-    const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-    if (file) loadFile(file);
-  });
-  // Файл, брошенный в любое место страницы, тоже принимаем.
-  // Если бросили прямо в зону загрузки — её собственный обработчик уже сработал.
-  document.addEventListener("dragover", (e) => e.preventDefault());
-  document.addEventListener("drop", (e) => {
-    e.preventDefault();
-    if (el.dropzone.contains(e.target)) return;
-    const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-    if (file) loadFile(file);
-  });
-
-  el.demoBtn.addEventListener("click", async (e) => {
-    e.stopPropagation();
-    try {
-      const res = await fetch("../salons.json", { cache: "no-store" });
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      loadText(await res.text(), "salons.json");
-    } catch (err) {
-      showError(t("errFetch") + " (" + err.message + "). " + t("errFetchHint"));
-    }
-  });
-
-  el.resetBtn.addEventListener("click", async () => {
-    await store.clear();
-    state.rows = []; state.filtered = []; state.fileName = "";
-    el.grid.textContent = ""; el.fileInput.value = "";
-    el.toolbar.classList.remove("on"); el.stats.classList.remove("on");
-    el.dropzone.style.display = "";
-    el.filename.textContent = "";
-    el.q.value = ""; el.category.value = ""; el.minRating.value = "0"; el.sort.value = "rating";
-    el.lang.value = "";
-    el.subtitle.textContent = "";
-    el.subtitle.append(document.createTextNode(t("subtitle") + " "));
-    const scriptName = document.createElement("b");
-    scriptName.textContent = "maps_scraper.py";
-    el.subtitle.append(scriptName, el.langs);
-    showNotice("");
-    clearError();
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  });
-
-  el.noticeClear.addEventListener("click", () => el.resetBtn.click());
-  el.noticePick.addEventListener("click", () => el.fileInput.click());
-
-  // Если фильтры скрыли все записи, даём выход одним нажатием.
-  el.emptyReset.addEventListener("click", () => {
-    el.q.value = ""; el.category.value = ""; el.minRating.value = "0"; el.sort.value = "rating";
-    el.lang.value = "";
-    store.saveFilters(currentFilters());
-    applyFilters();
-  });
 
   /* ------------------------------------------------------------------ */
   /* Фильтры, сортировка, отрисовка                                      */
@@ -1137,18 +842,8 @@
   }
 
   function renderStats() {
-    const rows = state.filtered;
-    el.stTotal.textContent = String(rows.length);
-
-    const rated = rows.filter((r) => r.rating !== null);
-    el.stAvg.textContent = rated.length
-      ? (rated.reduce((sum, r) => sum + r.rating, 0) / rated.length).toFixed(2)
-      : "—";
-
-    const reviews = rows.reduce((sum, r) => sum + (r.reviews || 0), 0);
-    el.stReviews.textContent = reviews ? reviews.toLocaleString(LANG === "ru" ? "ru-RU" : LANG) : "0";
-    el.stPhone.textContent = String(rows.filter((r) => r.phone).length);
-    el.stSpanish.textContent = String(rows.filter((r) => r.spanish).length);
+    // Публичный сайт: показываем пользователю только количество найденного
+    el.empty.classList.toggle("on", state.filtered.length === 0);
   }
 
   function ratingClass(rating) {
@@ -1295,39 +990,6 @@
   });
 
   /* ------------------------------------------------------------------ */
-  /* Экспорт CSV (только отфильтрованные строки)                         */
-  /* ------------------------------------------------------------------ */
-  const CSV_FIELDS = ["name", "rating", "reviews", "category", "address", "phone", "website",
-                      "hours", "hoursStatus", "spanishText", "spanishEvidence", "url", "city", "query"];
-  const csvHead = () => (I18N[LANG] || I18N.en).csvHead;
-
-  el.csvBtn.addEventListener("click", () => {
-    const cell = (value) => {
-      const s = value === null || value === undefined ? "" : String(value);
-      return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
-    };
-    const lines = [csvHead().join(";")];
-    for (const row of state.filtered) {
-      const view = Object.assign({}, row, {
-        spanishText: row.spanish ? "✔" : "",
-        category: categoryLabel(row.category),
-      });
-      lines.push(CSV_FIELDS.map((f) => cell(view[f])).join(";"));
-    }
-
-    // BOM, чтобы Excel корректно открыл UTF-8
-    const blob = new Blob(["\ufeff" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = (state.fileName.replace(/\.json$/i, "") || "catalog") + ".csv";
-    document.body.append(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  });
-
-  /* ------------------------------------------------------------------ */
   /* Старт: данные из salons.data.js → сохранённая копия → salons.json по http */
   /* ------------------------------------------------------------------ */
   const bundledData = () => {
@@ -1360,51 +1022,23 @@
   applyLanguage();
 
   (async () => {
-    let record = null;
-    try { record = await store.loadRows(); } catch (err) { record = null; }
     const bundled = bundledData();
-
-    // Кто свежее — тот и показываем: выгрузка из БД или копия из прошлого визита.
-    const storedTime = record ? (record.generatedAt || record.savedAt || 0) : 0;
-    const bundledTime = bundled ? (bundled.generatedAt || 0) : 0;
-
-    if (bundled && (!record || bundledTime > storedTime)) {
-      applyData(bundled.rows, bundled.source);
+    if (bundled) {
+      applyRows(bundled.rows, bundled.source);
       restoreFilters();
       applyFilters();
-      await store.saveRows({
-        fileName: bundled.source,
-        savedAt: Date.now(),
-        generatedAt: bundled.generatedAt,
-        rows: bundled.rows,
-      });
-      const when = bundled.generatedAt ? " · " + t("exportedAgo") + " " +
-        relativeTime(bundled.generatedAt) : "";
-      showNotice(t("loadedAuto") + ": " + bundled.source + " · " +
-        bundled.rows.length + " " + recordsWord(bundled.rows.length) + when + ".");
       return;
     }
-
-    if (record) {
-      applyData(record.rows, record.fileName);
-      restoreFilters();
-      applyFilters();
-      const when = (record.generatedAt || record.savedAt)
-        ? " · " + t("savedAgo") + " " + relativeTime(record.generatedAt || record.savedAt) : "";
-      const where = store.mode === "localStorage" ? " (" + t("inLocalStorage") + ")" : "";
-      showNotice(t("restored") + ": " + record.fileName + " · " + record.rows.length + " " +
-        recordsWord(record.rows.length) + when + where + ".");
-      return;
-    }
-
-    if (store.warning) showNotice(store.warning);
-
-    // Нет ни выгрузки, ни сохранённой копии — если страница отдана по http, пробуем salons.json.
-    if (location.protocol === "file:") return;  // по file:// fetch локальных файлов запрещён
+    // Запасной путь: страница отдана по http, берём данные из salons.json
     try {
       const res = await fetch("../salons.json", { cache: "no-store" });
-      if (res.ok) loadText(await res.text(), "salons.json");
-    } catch (err) { /* нет файла — значит ждём ручной загрузки */ }
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      applyRows(extractRows(await res.json()), "salons.json");
+      restoreFilters();
+      applyFilters();
+    } catch (err) {
+      showError(t("errNoData"));
+    }
   })();
 })();
 </script>
