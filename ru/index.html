@@ -268,7 +268,7 @@
 </footer>
 
 <!-- Данные, созданные export_json.py: локальный <script src> работает и по file://, в отличие от fetch -->
-<script src="../salons.data.js?v=2026-10-14T14:03:39+00:00" onerror="window.__CATALOG_DATA_MISSING__ = true"></script>
+<script src="../salons.data.js?v=2026-10-14T14:16:56+00:00" onerror="window.__CATALOG_DATA_MISSING__ = true"></script>
 <script>
 (() => {
   "use strict";
@@ -520,6 +520,9 @@
     "open": { ru: "Открыто", en: "Open", es: "Abierto" },
     "скоро закроется": { ru: "Скоро закроется", en: "Closing soon", es: "Cierra pronto" },
     "closing soon": { ru: "Скоро закроется", en: "Closing soon", es: "Cierra pronto" },
+    "скоро откроется": { ru: "Скоро откроется", en: "Opening soon", es: "Abre pronto" },
+    "opening soon": { ru: "Скоро откроется", en: "Opening soon", es: "Abre pronto" },
+    "opens soon": { ru: "Скоро откроется", en: "Opening soon", es: "Abre pronto" },
   };
 
   /* Страны, регионы и города, которые Google отдаёт по-русски */
@@ -599,9 +602,12 @@
     }).join(", ");
   }
 
+  /* Служебный текст Google, который мог попасть в статус до правки парсера */
+  const STATUS_NOISE = /(?:Обновлено компанией|Updated by (?:the )?business|Actualizado por la empresa)[^·|]*/gi;
+
   function localizeStatus(text) {
     if (!text) return "";
-    return localizeHoursText(String(text));
+    return localizeHoursText(String(text)).replace(STATUS_NOISE, "").replace(/\s*·\s*$/, "").trim();
   }
 
 
