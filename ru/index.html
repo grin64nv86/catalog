@@ -230,6 +230,9 @@
   </div>
 
   <div id="grid"></div>
+  <div class="btnrow" id="moreRow" hidden>
+    <button id="moreBtn" type="button" data-i18n="showMore">Показать ещё</button>
+  </div>
   <div id="empty">
     <div data-i18n="emptyText">Ничего не найдено — попробуйте изменить условия поиска.</div>
     <div class="btnrow"><button id="emptyReset" type="button" data-i18n="resetFilters">Сбросить фильтры</button></div>
@@ -241,7 +244,7 @@
 </footer>
 
 <!-- Данные, созданные export_json.py: локальный <script src> работает и по file://, в отличие от fetch -->
-<script src="../salons.data.js?v=2026-10-14T19:15:07+00:00" onerror="window.__CATALOG_DATA_MISSING__ = true"></script>
+<script src="../salons.data.js?v=2026-10-15T11:46:11+00:00" onerror="window.__CATALOG_DATA_MISSING__ = true"></script>
 <script>
 (() => {
   "use strict";
@@ -253,6 +256,7 @@
   const I18N = {
     ru: {
       docTitle: "Каталог организаций — Google Maps",
+      showMore: "Показать ещё",
       title: "Каталог организаций",
       subtitle: "Рейтинги, адреса, телефоны и часы работы организаций",
       source: "Источник",
@@ -298,6 +302,7 @@
     },
     en: {
       docTitle: "Business catalog — Google Maps",
+      showMore: "Show more",
       title: "Business catalog",
       subtitle: "Ratings, addresses, phone numbers and opening hours of local businesses",
       source: "Source",
@@ -340,6 +345,7 @@
     },
     es: {
       docTitle: "Catálogo de negocios — Google Maps",
+      showMore: "Mostrar más",
       title: "Catálogo de negocios",
       subtitle: "Valoraciones, direcciones, teléfonos y horarios de los negocios",
       source: "Fuente",
@@ -598,7 +604,11 @@
   /* ------------------------------------------------------------------ */
   /* Состояние                                                           */
   /* ------------------------------------------------------------------ */
-  const state = { rows: [], filtered: [], fileName: "" };
+  // Показываем карточки порциями: при тысячах организаций отрисовка всего
+  // списка сразу подвешивает страницу, а так она открывается мгновенно.
+  const PAGE_SIZE = 60;
+  const state = { rows: [], filtered: [], fileName: "", shown: PAGE_SIZE };
+
 
   const $ = (id) => document.getElementById(id);
   const el = {
@@ -608,6 +618,7 @@
     langs: $("langs"),
     subtitle: $("subtitle"),
     emptyReset: $("emptyReset"),
+    moreRow: $("moreRow"), moreBtn: $("moreBtn"),
   };
 
   /* Настройки вида (язык и фильтры) — в localStorage */
@@ -853,6 +864,9 @@
     const minRating = parseFloat(el.minRating.value) || 0;
     const lang = el.lang.value;
 
+    // Новый набор фильтров — снова показываем первую порцию карточек.
+    state.shown = PAGE_SIZE;
+
     state.filtered = state.rows.filter((row) => {
       if (city && row.city !== city) return false;
       if (category && row.category !== category) return false;
@@ -1017,12 +1031,23 @@
   }
 
   function renderGrid() {
+    const visible = state.filtered.slice(0, state.shown);
     const fragment = document.createDocumentFragment();
-    for (const row of state.filtered) fragment.append(card(row));
+    for (const row of visible) fragment.append(card(row));
     el.grid.textContent = "";
     el.grid.append(fragment);
     el.empty.classList.toggle("on", state.filtered.length === 0);
+    const left = state.filtered.length - visible.length;
+    el.moreRow.hidden = left <= 0;
+    if (left > 0) {
+      el.moreBtn.textContent = `${t("showMore")} (${left})`;
+    }
   }
+
+  el.moreBtn.addEventListener("click", () => {
+    state.shown += PAGE_SIZE;
+    renderGrid();
+  });
 
   let filtersSaveTimer = null;
   ["input", "change"].forEach((evt) => {
