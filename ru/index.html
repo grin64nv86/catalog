@@ -247,6 +247,8 @@
     <span id="nearInfo" class="muted small"></span>
   </div>
 
+  <div class="btnrow" id="cityChooser" hidden></div>
+
   <div id="grid"></div>
   <div class="btnrow" id="moreRow" hidden>
     <button id="moreBtn" type="button" data-i18n="showMore">Показать ещё</button>
@@ -263,7 +265,7 @@
 
 <!-- Данные, созданные export_json.py: локальный <script src> работает и по file://, в отличие от fetch -->
 <script src="api.url.js"></script>
-<script src="../salons.data.js?v=2026-10-15T15:05:37+00:00" onerror="window.__CATALOG_DATA_MISSING__ = true"></script>
+<script src="../salons.data.js?v=2026-10-15T18:49:06+00:00" onerror="window.__CATALOG_DATA_MISSING__ = true"></script>
 <script>
 (() => {
   "use strict";
@@ -277,6 +279,7 @@
       docTitle: "Каталог организаций — Google Maps",
       showMore: "Показать ещё",
       radius: "Радиус", radiusAny: "любой", m: "м", km: "км",
+      allCities: "все города",
       sortDistance: "сначала ближайшие",
       nearEmptyRadius: "в этом радиусе ничего не нашлось",
       nearMe: "📍 Рядом со мной", nearLoading: "Ищу ближайшие…", nearFound: "Найдено рядом", nearEnd: "это все поблизости", nearError: "Не удалось получить данные", nearNoApi: "Адрес API не опубликован — обновите сайт командой ./run.sh publish", nearNoGeo: "Браузер не умеет определять координаты", nearGeo: "Определяю ваше местоположение…", nearGeoFail: "Не удалось определить местоположение",
@@ -327,6 +330,7 @@
       docTitle: "Business catalog — Google Maps",
       showMore: "Show more",
       radius: "Radius", radiusAny: "any", m: "m", km: "km",
+      allCities: "all cities",
       sortDistance: "nearest first",
       nearEmptyRadius: "nothing found within this radius",
       nearMe: "📍 Near me", nearLoading: "Looking for the nearest…", nearFound: "Found nearby", nearEnd: "that is all nearby", nearError: "Could not load data", nearNoApi: "API address is not published — run ./run.sh publish", nearNoGeo: "Geolocation is not supported", nearGeo: "Getting your location…", nearGeoFail: "Could not get your location",
@@ -374,6 +378,7 @@
       docTitle: "Catálogo de negocios — Google Maps",
       showMore: "Mostrar más",
       radius: "Radio", radiusAny: "cualquiera", m: "m", km: "km",
+      allCities: "todas las ciudades",
       sortDistance: "los más cercanos primero",
       nearEmptyRadius: "no se encontró nada en este radio",
       nearMe: "📍 Cerca de mí", nearLoading: "Buscando los más cercanos…", nearFound: "Encontrados cerca", nearEnd: "eso es todo cerca", nearError: "No se pudieron cargar los datos", nearNoApi: "La dirección de la API no está publicada — ejecute ./run.sh publish", nearNoGeo: "El navegador no admite geolocalización", nearGeo: "Obteniendo tu ubicación…", nearGeoFail: "No se pudo obtener tu ubicación",
@@ -651,6 +656,7 @@
     emptyReset: $("emptyReset"),
     moreRow: $("moreRow"), moreBtn: $("moreBtn"),
     nearBtn: $("nearBtn"), nearInfo: $("nearInfo"), nearRadius: $("nearRadius"),
+    cityChooser: $("cityChooser"),
   };
 
   // Адрес публичного API. На сайте он приходит из api.url.js (его пишет публикация),
@@ -865,6 +871,8 @@
   /* Отрисовка уже готового набора записей (после загрузки файла или восстановления). */
   function applyData(rows, fileName) {
     state.rows = rows;
+    // Набор данных сменился — режим «рядом» пересоберёт свой список заново
+    window.__NEAR_RESET__ = true;
     // Чистый снимок строк каталога: расстояния считаем от него и никогда не меняем
     // исходные адреса — иначе в карточке накапливались бы несколько «599 м · 706 м · …».
     window.__CATALOG_ROWS__ = rows.map((row) => Object.assign({}, row));
@@ -882,6 +890,8 @@
     if (!rows.length) { showError(t("errNoRows")); return false; }
     clearError();
     applyData(rows, sourceName);
+  rememberAll(state.rows);        // полный набор нужен для возврата «все города»
+  initCityChooser();              // выбор города, если публикация сделала разбивку
     applyFilters();
     return true;
   }
@@ -1200,6 +1210,13 @@
   }
 
   function loadLocalNear(append) {
+    if (window.__NEAR_RESET__) {
+      // Набор данных сменился (выбран другой город) — считаем заново
+      localNear.master = null;
+      localNear.list = null;
+      localNear.shown = 0;
+      window.__NEAR_RESET__ = false;
+    }
     if (!localNear.master) {
       // Берём чистыми те строки, что пришли из данных каталога (без наших подписей)
       localNear.master = (window.__CATALOG_ROWS__ || state.rows)
@@ -1291,6 +1308,88 @@
         filtersSaveTimer = setTimeout(() => store.saveFilters(currentFilters()), 400);
       }));
   });
+
+  /* ------------------------------------------------------------------ */
+  /* Разбивка по городам: сайт грузит только выбранный город              */
+  /* ------------------------------------------------------------------ */
+  // Файлы городов пишет публикация: data/<slug>.js + data/manifest.js.
+  // Берём их, если они есть; иначе всё работает как раньше — целым файлом.
+  const cityFiles = { loaded: new Set(), stamp: Math.floor(Date.now() / 3600000) };
+
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      const tag = document.createElement("script");
+      tag.src = src;
+      tag.onload = () => resolve(true);
+      tag.onerror = () => reject(new Error("не загрузился " + src));
+      document.head.append(tag);
+    });
+  }
+
+  async function initCityChooser() {
+    let manifest = null;
+    try {
+      manifest = await fetch(`data/manifest.js?h=${cityFiles.stamp}`).then((r) => {
+        if (!r.ok) throw new Error("нет манифеста");
+        return r.text();
+      }).then((text) => {
+        // Файл — обычный JS: выполняем его в отдельной функции, чтобы получить объект
+        return new Function(text + "; return window.__CATALOG_MANIFEST__;")();
+      });
+    } catch (err) {
+      // Локально через file:// или если разбивки нет — тихо остаёмся на полном файле
+      return false;
+    }
+    if (!manifest || !manifest.cities || manifest.cities.length < 2) return false;
+
+    const button = (label, count, handler, active) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "tiny" + (active ? " primary" : "");
+      btn.textContent = `${label} (${count.toLocaleString(LANG)})`;
+      btn.addEventListener("click", () => {
+        el.cityChooser.querySelectorAll("button").forEach((b) => b.classList.remove("primary"));
+        btn.classList.add("primary");
+        handler();
+      });
+      return btn;
+    };
+
+    el.cityChooser.textContent = "";
+    el.cityChooser.append(button(t("allCities"), manifest.total, () => switchToAll(), true));
+    for (const item of manifest.cities) {
+      el.cityChooser.append(button(item.city, item.count, () => switchToCity(item), false));
+    }
+    el.cityChooser.hidden = false;
+    return true;
+  }
+
+  let allRows = null;   // полный набор: нужен для возврата в режим «все города»
+
+  function rememberAll(rows) {
+    if (!allRows) allRows = rows;
+  }
+
+  async function switchToCity(item) {
+    try {
+      if (!cityFiles.loaded.has(item.slug)) {
+        await loadScript(`data/${item.slug}.js?h=${cityFiles.stamp}`);
+        cityFiles.loaded.add(item.slug);
+      }
+      const payload = window.__CATALOG_CITY__;
+      if (!payload || !Array.isArray(payload.rows)) throw new Error("нет данных города");
+      applyData(payload.rows.map(normalize).filter(Boolean), item.city);
+      toast(`${item.city}: ${payload.count.toLocaleString(LANG)}`);
+    } catch (err) {
+      toast("Не удалось загрузить город: " + err.message);
+    }
+  }
+
+  function switchToAll() {
+    if (!allRows) return;
+    applyData(allRows, "salons.data.js");
+    toast(t("allCities"));
+  }
 
   /* ------------------------------------------------------------------ */
   /* Старт: данные из salons.data.js → сохранённая копия → salons.json по http */
