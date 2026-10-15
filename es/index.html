@@ -263,7 +263,7 @@
 
 <!-- Данные, созданные export_json.py: локальный <script src> работает и по file://, в отличие от fetch -->
 <script src="api.url.js"></script>
-<script src="../salons.data.js?v=2026-10-15T14:15:19+00:00" onerror="window.__CATALOG_DATA_MISSING__ = true"></script>
+<script src="../salons.data.js?v=2026-10-15T14:20:58+00:00" onerror="window.__CATALOG_DATA_MISSING__ = true"></script>
 <script>
 (() => {
   "use strict";
@@ -668,6 +668,8 @@
 
   // Радиус поиска: 0 — без ограничения. Подпись показываем и в статусе, и в карточках.
   const nearRadiusM = () => Number(el.nearRadius.value) || 0;
+  // Снимок исходных строк: нужен режиму «рядом», чтобы не зависеть от показанного списка
+  window.__CATALOG_ROWS__ = null;
 
   // «Сначала ближайшие» имеет смысл только в режиме «рядом»: в остальных случаях
   // вариант скрыт, чтобы не сбивать с толку.
@@ -863,6 +865,9 @@
   /* Отрисовка уже готового набора записей (после загрузки файла или восстановления). */
   function applyData(rows, fileName) {
     state.rows = rows;
+    // Чистый снимок строк каталога: расстояния считаем от него и никогда не меняем
+    // исходные адреса — иначе в карточке накапливались бы несколько «599 м · 706 м · …».
+    window.__CATALOG_ROWS__ = rows.map((row) => Object.assign({}, row));
     state.fileName = fileName || "данные";
     el.toolbar.classList.add("on");
     buildCityOptions();
@@ -929,7 +934,9 @@
     const lang = el.lang.value;
 
     // Новый набор фильтров — снова показываем первую порцию карточек.
-    state.shown = PAGE_SIZE;
+    // В режиме «рядом» порции выдаёт сервер (или локальный расчёт), поэтому
+    // здесь счётчик не сбрасываем: иначе «Показать ещё» не увеличивал бы список.
+    if (!near.active) state.shown = PAGE_SIZE;
 
     state.filtered = state.rows.filter((row) => {
       if (city && row.city !== city) return false;
@@ -1149,6 +1156,10 @@
       near.active = true;
       const fresh = (data.rows || []).map((row) => {
         const item = normalize(row);
+        // метры сохраняем: по этому полю работает сортировка «сначала ближайшие»
+        if (item && row.metres !== undefined && row.metres !== null) {
+          item.metres = Number(row.metres);
+        }
         // Расстояние показываем прямо в адресе: так карточка сразу понятна
         if (item && row.metres !== undefined && row.metres !== null) {
           const metres = Number(row.metres);
@@ -1176,7 +1187,9 @@
   // Запасной путь без API: расстояния считает сам браузер по координатам, которые
   // уже лежат в данных каталога. Так «рядом со мной» работает и на статическом
   // сайте, где серверный API недоступен.
-  const localNear = { list: null, shown: 0 };
+  // master — исходный набор организаций с координатами. Из него считаем расстояния
+  // каждый раз заново: иначе после смены радиуса набор «съёживался» до уже показанного.
+  const localNear = { master: null, list: null, shown: 0 };
 
   function distanceM(lat1, lon1, lat2, lon2) {
     const R = 6371000, rad = (deg) => (deg * Math.PI) / 180;
@@ -1187,9 +1200,14 @@
   }
 
   function loadLocalNear(append) {
-    if (!append) {
-      localNear.list = state.rows
+    if (!localNear.master) {
+      // Берём чистыми те строки, что пришли из данных каталога (без наших подписей)
+      localNear.master = (window.__CATALOG_ROWS__ || state.rows)
         .filter((row) => Number.isFinite(row.lat) && Number.isFinite(row.lon))
+        .map((row) => Object.assign({}, row));
+    }
+    if (!append || !localNear.list) {
+      localNear.list = localNear.master
         .map((row) => Object.assign({}, row, {
           metres: distanceM(near.lat, near.lon, row.lat, row.lon),
         }))
@@ -1202,9 +1220,11 @@
     const next = localNear.list.slice(localNear.shown, localNear.shown + PAGE_SIZE);
     localNear.shown += next.length;
     const prepared = next.map((row) => {
-      const metres = row.metres;
+      const metres = Number(row.metres) || 0;
       const label = metres < 1000 ? `${Math.round(metres)} м` : `${(metres / 1000).toFixed(1)} км`;
-      return Object.assign({}, row, { address: row.address ? `${label} · ${row.address}` : label });
+      // Адрес берём из чистого снимка: там нет прошлых подписей
+      const clean = row.address || "";
+      return Object.assign({}, row, { metres, address: clean ? `${label} · ${clean}` : label });
     });
     near.active = true;
     state.rows = state.rows.concat(prepared);
@@ -1251,7 +1271,7 @@
   // Радиус меняется на лету: пересчитываем и в браузере, и через API
   el.nearRadius.addEventListener("change", () => {
     if (!near.active) { return; }
-    if (localNear.shown) { localNear.list = null; loadLocalNear(false); } else { loadNear(false); }
+    loadLocalNear(false);   // master не трогаем: набор восстанавливается полностью
   });
 
   let filtersSaveTimer = null;
