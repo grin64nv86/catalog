@@ -220,6 +220,7 @@
     </label>
     <label><span data-i18n="filterSort">Сортировка</span>
       <select id="sort">
+        <option value="distance" data-i18n="sortDistance">сначала ближайшие</option>
         <option value="rating" data-i18n="sortRating">рейтинг ↓</option>
         <option value="reviews" data-i18n="sortReviews">отзывы ↓</option>
         <option value="name" data-i18n="sortName">название A→Z</option>
@@ -262,7 +263,7 @@
 
 <!-- Данные, созданные export_json.py: локальный <script src> работает и по file://, в отличие от fetch -->
 <script src="api.url.js"></script>
-<script src="../salons.data.js?v=2026-10-15T13:51:00+00:00" onerror="window.__CATALOG_DATA_MISSING__ = true"></script>
+<script src="../salons.data.js?v=2026-10-15T14:15:19+00:00" onerror="window.__CATALOG_DATA_MISSING__ = true"></script>
 <script>
 (() => {
   "use strict";
@@ -276,6 +277,7 @@
       docTitle: "Каталог организаций — Google Maps",
       showMore: "Показать ещё",
       radius: "Радиус", radiusAny: "любой", m: "м", km: "км",
+      sortDistance: "сначала ближайшие",
       nearEmptyRadius: "в этом радиусе ничего не нашлось",
       nearMe: "📍 Рядом со мной", nearLoading: "Ищу ближайшие…", nearFound: "Найдено рядом", nearEnd: "это все поблизости", nearError: "Не удалось получить данные", nearNoApi: "Адрес API не опубликован — обновите сайт командой ./run.sh publish", nearNoGeo: "Браузер не умеет определять координаты", nearGeo: "Определяю ваше местоположение…", nearGeoFail: "Не удалось определить местоположение",
       title: "Каталог организаций",
@@ -325,6 +327,7 @@
       docTitle: "Business catalog — Google Maps",
       showMore: "Show more",
       radius: "Radius", radiusAny: "any", m: "m", km: "km",
+      sortDistance: "nearest first",
       nearEmptyRadius: "nothing found within this radius",
       nearMe: "📍 Near me", nearLoading: "Looking for the nearest…", nearFound: "Found nearby", nearEnd: "that is all nearby", nearError: "Could not load data", nearNoApi: "API address is not published — run ./run.sh publish", nearNoGeo: "Geolocation is not supported", nearGeo: "Getting your location…", nearGeoFail: "Could not get your location",
       title: "Business catalog",
@@ -371,6 +374,7 @@
       docTitle: "Catálogo de negocios — Google Maps",
       showMore: "Mostrar más",
       radius: "Radio", radiusAny: "cualquiera", m: "m", km: "km",
+      sortDistance: "los más cercanos primero",
       nearEmptyRadius: "no se encontró nada en este radio",
       nearMe: "📍 Cerca de mí", nearLoading: "Buscando los más cercanos…", nearFound: "Encontrados cerca", nearEnd: "eso es todo cerca", nearError: "No se pudieron cargar los datos", nearNoApi: "La dirección de la API no está publicada — ejecute ./run.sh publish", nearNoGeo: "El navegador no admite geolocalización", nearGeo: "Obteniendo tu ubicación…", nearGeoFail: "No se pudo obtener tu ubicación",
       title: "Catálogo de negocios",
@@ -664,6 +668,14 @@
 
   // Радиус поиска: 0 — без ограничения. Подпись показываем и в статусе, и в карточках.
   const nearRadiusM = () => Number(el.nearRadius.value) || 0;
+
+  // «Сначала ближайшие» имеет смысл только в режиме «рядом»: в остальных случаях
+  // вариант скрыт, чтобы не сбивать с толку.
+  function syncDistanceOption() {
+    const option = el.sort.querySelector('option[value="distance"]');
+    if (option) option.hidden = !near.active;
+    if (!near.active && el.sort.value === "distance") el.sort.value = "reviews";
+  }
   function radiusLabel() {
     const metres = nearRadiusM();
     if (!metres) return t("radiusAny");
@@ -938,6 +950,10 @@
     const sortKey = el.sort.value;
     const collator = new Intl.Collator("ru");
     state.filtered.sort((a, b) => {
+      // Расстояние важнее рейтинга: ближайшие идут первыми
+      if (sortKey === "distance") {
+        return (a.metres ?? Infinity) - (b.metres ?? Infinity);
+      }
       if (sortKey === "reviews") return (b.reviews || 0) - (a.reviews || 0) || collator.compare(a.name, b.name);
       if (sortKey === "name") return collator.compare(a.name, b.name);
       if (sortKey === "address") return collator.compare(a.address || "", b.address || "");
@@ -1215,6 +1231,10 @@
         near.lon = position.coords.longitude.toFixed(6);
         near.cursor = null;
         el.nearBtn.disabled = false;
+        if (el.sort.querySelector('option[value="distance"]')) {
+          el.sort.querySelector('option[value="distance"]').hidden = false;
+        }
+        el.sort.value = "distance";   // ближайшие первыми
         if (apiBase) { loadNear(false); } else { loadLocalNear(false); }
       },
       (error) => {
