@@ -250,7 +250,7 @@
 
 <!-- Данные, созданные export_json.py: локальный <script src> работает и по file://, в отличие от fetch -->
 <script src="api.url.js"></script>
-<script src="../salons.data.js?v=2026-10-15T13:22:25+00:00" onerror="window.__CATALOG_DATA_MISSING__ = true"></script>
+<script src="../salons.data.js?v=2026-10-15T13:23:55+00:00" onerror="window.__CATALOG_DATA_MISSING__ = true"></script>
 <script>
 (() => {
   "use strict";
@@ -733,6 +733,9 @@
       url: mapsUrl,
       city: pick(raw, ["city", "Город", "город"]),
       query: pick(raw, ["query", "Запрос", "запрос"]),
+      // Координаты нужны для «рядом со мной» без API: расстояния считает браузер
+      lat: num(pick(raw, ["lat", "latitude", "широта"])),
+      lon: num(pick(raw, ["lon", "lng", "longitude", "долгота"])),
     };
   }
 
@@ -1070,7 +1073,10 @@
   el.moreBtn.addEventListener("click", () => {
     // В режиме «рядом» следующая порция приходит с сервера по курсору,
     // в статическом режиме — просто показываем больше из уже загруженного.
-    if (near.active) { loadNear(true); return; }
+    if (near.active) {
+      if (localNear.shown) { loadLocalNear(true); } else { loadNear(true); }
+      return;
+    }
     state.shown += PAGE_SIZE;
     renderGrid();
   });
@@ -1117,15 +1123,54 @@
       el.moreRow.hidden = !data.has_more;
       el.moreBtn.textContent = t("showMore");
     } catch (err) {
-      el.nearInfo.textContent = t("nearError") + ": " + err.message;
+      // API недоступен — не показываем ошибку, а считаем расстояния сами
+      loadLocalNear(false);
     }
   }
 
-  el.nearBtn.addEventListener("click", () => {
-    if (!apiBase) {
-      el.nearInfo.textContent = t("nearNoApi");
-      return;
+  // Запасной путь без API: расстояния считает сам браузер по координатам, которые
+  // уже лежат в данных каталога. Так «рядом со мной» работает и на статическом
+  // сайте, где серверный API недоступен.
+  const localNear = { list: null, shown: 0 };
+
+  function distanceM(lat1, lon1, lat2, lon2) {
+    const R = 6371000, rad = (deg) => (deg * Math.PI) / 180;
+    const dLat = rad(lat2 - lat1), dLon = rad(lon2 - lon1);
+    const a = Math.sin(dLat / 2) ** 2 +
+      Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(dLon / 2) ** 2;
+    return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)));
+  }
+
+  function loadLocalNear(append) {
+    if (!append) {
+      localNear.list = state.rows
+        .filter((row) => Number.isFinite(row.lat) && Number.isFinite(row.lon))
+        .map((row) => Object.assign({}, row, {
+          metres: distanceM(near.lat, near.lon, row.lat, row.lon),
+        }))
+        .sort((a, b) => a.metres - b.metres);
+      localNear.shown = 0;
+      state.rows = [];
+      state.shown = 0;
     }
+    const next = localNear.list.slice(localNear.shown, localNear.shown + PAGE_SIZE);
+    localNear.shown += next.length;
+    const prepared = next.map((row) => {
+      const metres = row.metres;
+      const label = metres < 1000 ? `${Math.round(metres)} м` : `${(metres / 1000).toFixed(1)} км`;
+      return Object.assign({}, row, { address: row.address ? `${label} · ${row.address}` : label });
+    });
+    near.active = true;
+    state.rows = state.rows.concat(prepared);
+    state.shown = state.rows.length;
+    applyFilters();
+    el.nearInfo.textContent = `${t("nearFound")}: ${state.rows.length}` +
+      (localNear.shown < localNear.list.length ? "" : ` · ${t("nearEnd")}`);
+    el.moreRow.hidden = localNear.shown >= localNear.list.length;
+    el.moreBtn.textContent = t("showMore");
+  }
+
+  el.nearBtn.addEventListener("click", () => {
     if (!navigator.geolocation) { el.nearInfo.textContent = t("nearNoGeo"); return; }
     el.nearBtn.disabled = true;
     el.nearInfo.textContent = t("nearGeo");
@@ -1135,7 +1180,7 @@
         near.lon = position.coords.longitude.toFixed(6);
         near.cursor = null;
         el.nearBtn.disabled = false;
-        loadNear(false);
+        if (apiBase) { loadNear(false); } else { loadLocalNear(false); }
       },
       (error) => {
         el.nearBtn.disabled = false;
