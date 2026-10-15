@@ -229,6 +229,11 @@
 
   </div>
 
+  <div class="btnrow" id="nearRow">
+    <button id="nearBtn" type="button" data-i18n="nearMe">📍 Рядом со мной</button>
+    <span id="nearInfo" class="muted small"></span>
+  </div>
+
   <div id="grid"></div>
   <div class="btnrow" id="moreRow" hidden>
     <button id="moreBtn" type="button" data-i18n="showMore">Показать ещё</button>
@@ -244,7 +249,8 @@
 </footer>
 
 <!-- Данные, созданные export_json.py: локальный <script src> работает и по file://, в отличие от fetch -->
-<script src="../salons.data.js?v=2026-10-15T11:46:11+00:00" onerror="window.__CATALOG_DATA_MISSING__ = true"></script>
+<script src="api.url.js"></script>
+<script src="../salons.data.js?v=2026-10-15T12:38:03+00:00" onerror="window.__CATALOG_DATA_MISSING__ = true"></script>
 <script>
 (() => {
   "use strict";
@@ -257,6 +263,7 @@
     ru: {
       docTitle: "Каталог организаций — Google Maps",
       showMore: "Показать ещё",
+      nearMe: "📍 Рядом со мной", nearLoading: "Ищу ближайшие…", nearFound: "Найдено рядом", nearEnd: "это все поблизости", nearError: "Не удалось получить данные", nearNoApi: "Адрес API не опубликован — обновите сайт командой ./run.sh publish", nearNoGeo: "Браузер не умеет определять координаты", nearGeo: "Определяю ваше местоположение…", nearGeoFail: "Не удалось определить местоположение",
       title: "Каталог организаций",
       subtitle: "Рейтинги, адреса, телефоны и часы работы организаций",
       source: "Источник",
@@ -303,6 +310,7 @@
     en: {
       docTitle: "Business catalog — Google Maps",
       showMore: "Show more",
+      nearMe: "📍 Near me", nearLoading: "Looking for the nearest…", nearFound: "Found nearby", nearEnd: "that is all nearby", nearError: "Could not load data", nearNoApi: "API address is not published — run ./run.sh publish", nearNoGeo: "Geolocation is not supported", nearGeo: "Getting your location…", nearGeoFail: "Could not get your location",
       title: "Business catalog",
       subtitle: "Ratings, addresses, phone numbers and opening hours of local businesses",
       source: "Source",
@@ -346,6 +354,7 @@
     es: {
       docTitle: "Catálogo de negocios — Google Maps",
       showMore: "Mostrar más",
+      nearMe: "📍 Cerca de mí", nearLoading: "Buscando los más cercanos…", nearFound: "Encontrados cerca", nearEnd: "eso es todo cerca", nearError: "No se pudieron cargar los datos", nearNoApi: "La dirección de la API no está publicada — ejecute ./run.sh publish", nearNoGeo: "El navegador no admite geolocalización", nearGeo: "Obteniendo tu ubicación…", nearGeoFail: "No se pudo obtener tu ubicación",
       title: "Catálogo de negocios",
       subtitle: "Valoraciones, direcciones, teléfonos y horarios de los negocios",
       source: "Fuente",
@@ -619,7 +628,21 @@
     subtitle: $("subtitle"),
     emptyReset: $("emptyReset"),
     moreRow: $("moreRow"), moreBtn: $("moreBtn"),
+    nearBtn: $("nearBtn"), nearInfo: $("nearInfo"),
   };
+
+  // Адрес публичного API. На сайте он приходит из api.url.js (его пишет публикация),
+  // локально — берём адрес по умолчанию, потому что file:// и localhost ничего не знают
+  // о туннеле. Если адреса нет, кнопка «Рядом со мной» честно об этом скажет.
+  const apiBase = (() => {
+    if (window.__API_BASE__) return String(window.__API_BASE__).replace(/\/+$/, "");
+    const host = location.hostname;
+    if (location.protocol === "file:" || host === "localhost" || host === "127.0.0.1") {
+      return "http://127.0.0.1:8792";
+    }
+    return "";
+  })();
+  const near = { active: false, cursor: null, lat: null, lon: null };
 
   /* Настройки вида (язык и фильтры) — в localStorage */
   const LS_FILTERS = "maps-catalog/filters";
@@ -1045,9 +1068,86 @@
   }
 
   el.moreBtn.addEventListener("click", () => {
+    // В режиме «рядом» следующая порция приходит с сервера по курсору,
+    // в статическом режиме — просто показываем больше из уже загруженного.
+    if (near.active) { loadNear(true); return; }
     state.shown += PAGE_SIZE;
     renderGrid();
   });
+
+  // --- «Рядом со мной»: единственное обращение к API, остальное — статика ---
+  function nearParams(append) {
+    const params = new URLSearchParams({ lat: near.lat, lon: near.lon });
+    if (el.category.value) params.set("category", el.category.value);
+    const lang = el.lang.value;
+    if (lang === "es" || lang === "es-strong") params.set("lang", "es");
+    if (el.minRating.value) params.set("min_rating", el.minRating.value);
+    if (el.q.value.trim()) params.set("q", el.q.value.trim());
+    if (append && near.cursor && near.cursor.last_metres !== undefined) {
+      params.set("last_metres", near.cursor.last_metres);
+    }
+    return params;
+  }
+
+  async function loadNear(append) {
+    if (!near.lat) return;
+    el.nearInfo.textContent = t("nearLoading");
+    try {
+      const response = await fetch(apiBase + "/api/near?" + nearParams(append).toString());
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || ("HTTP " + response.status));
+      near.cursor = data.next_cursor;
+      near.active = true;
+      const fresh = (data.rows || []).map((row) => {
+        const item = normalize(row);
+        // Расстояние показываем прямо в адресе: так карточка сразу понятна
+        if (item && row.metres !== undefined && row.metres !== null) {
+          const metres = Number(row.metres);
+          const label = metres < 1000 ? `${Math.round(metres)} м` : `${(metres / 1000).toFixed(1)} км`;
+          item.address = item.address ? `${label} · ${item.address}` : label;
+        }
+        return item;
+      }).filter(Boolean);
+      state.rows = append ? state.rows.concat(fresh) : fresh;
+      state.shown = state.rows.length;      // в режиме «рядом» показываем всё, что пришло
+      applyFilters();
+      const total = state.rows.length;
+      el.nearInfo.textContent = `${t("nearFound")}: ${total}` +
+        (data.has_more ? "" : ` · ${t("nearEnd")}`);
+      el.moreRow.hidden = !data.has_more;
+      el.moreBtn.textContent = t("showMore");
+    } catch (err) {
+      el.nearInfo.textContent = t("nearError") + ": " + err.message;
+    }
+  }
+
+  el.nearBtn.addEventListener("click", () => {
+    if (!apiBase) {
+      el.nearInfo.textContent = t("nearNoApi");
+      return;
+    }
+    if (!navigator.geolocation) { el.nearInfo.textContent = t("nearNoGeo"); return; }
+    el.nearBtn.disabled = true;
+    el.nearInfo.textContent = t("nearGeo");
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        near.lat = position.coords.latitude.toFixed(6);
+        near.lon = position.coords.longitude.toFixed(6);
+        near.cursor = null;
+        el.nearBtn.disabled = false;
+        loadNear(false);
+      },
+      (error) => {
+        el.nearBtn.disabled = false;
+        el.nearInfo.textContent = t("nearGeoFail") + ": " + (error.message || "");
+      },
+      { enableHighAccuracy: false, timeout: 12000, maximumAge: 300000 },
+    );
+  });
+
+  // Смена фильтров в режиме «рядом» перезапрашивает выдачу у API.
+  [el.category, el.lang, el.minRating].forEach((control) =>
+    control.addEventListener("change", () => { if (near.active) loadNear(false); }));
 
   let filtersSaveTimer = null;
   ["input", "change"].forEach((evt) => {
